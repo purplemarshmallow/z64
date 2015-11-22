@@ -245,6 +245,7 @@ void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t s
 void rglRdram2Framebuffer(rglRenderBuffer_t & buffer, uint32_t start, uint32_t stop);
 void rglRenderChunks(rglRenderBuffer_t * upto);
 void rglRenderChunks(int upto);
+float rglZscale(uint16_t z);
 
 extern int screen_width, screen_height;
 

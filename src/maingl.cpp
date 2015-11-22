@@ -25,7 +25,7 @@
 
 #include <SDL/SDL.h>
 
-//#define THREADED
+#define THREADED
 #ifdef WIN32
 #define THREADED
 #endif
@@ -58,11 +58,27 @@ int rdpThreadFunc(void * dummy)
   return 0;
 }
 
+void rdpSignalFullSync()
+{
+  SDL_SemPost(rdpCommandCompleteSema);
+}
+void rdpWaitFullSync()
+{
+  SDL_SemWait(rdpCommandCompleteSema);
+}
+
 void rdpPostCommand()
 {
+  int sync = rdp_store_list();
   SDL_SemPost(rdpCommandSema);
   if (!rglSettings.async)
     SDL_SemWait(rdpCommandCompleteSema);
+  else if (sync) {
+    rdpWaitFullSync();
+    *gfx.MI_INTR_REG |= 0x20;
+    gfx.CheckInterrupts();
+  }
+  
   waiting = 0;
 }
 

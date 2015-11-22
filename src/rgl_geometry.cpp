@@ -24,6 +24,42 @@
 
 #include <SDL/SDL.h>
 
+inline float _zscale(uint16_t z)
+{
+  uint32_t res;
+  int e = z>>16-3;
+  int m = (z>>2)&((1<<11)-1);
+  
+  static struct {
+    int shift;
+    long add;
+  } z_format[8] = {
+    6, 0x00000,
+    5, 0x20000,
+    4, 0x30000,
+    3, 0x38000,
+    2, 0x3c000,
+    1, 0x3e000,
+    0, 0x3f000,
+    0, 0x3f800,
+  };
+  
+  res = (m << z_format[e].shift) +
+    z_format[e].add;
+  return float(res)/0x3ffff;
+}
+
+inline float zscale(uint16_t z)
+{
+  return float(z)/0xffff;
+}
+//#define zscale _zscale
+
+float rglZscale(uint16_t z)
+{
+  return _zscale(z);
+}
+
 void rglTextureRectangle(rdpTexRect_t * rect, int flip)
 {
   int tilenum = rect->tilenum;
@@ -63,10 +99,12 @@ void rglTextureRectangle(rdpTexRect_t * rect, int flip)
   y1 /= 4;
   y2 /= 4;
   
+  if (x2 < x1) x2 = x1+1; // black gauge in SCARS (E)
+
   int t1 = rglT1Usage(rdpState)? RGL_STRIP_TEX1:0;
   int t2 = (rect->tilenum < 7 && rglT2Usage(rdpState))? RGL_STRIP_TEX2:0;
   if (t1)
-    rglPrepareRendering(1, tilenum==7? 0:tilenum, y2-y1, 1);
+    rglPrepareRendering(1, (tilenum==7 && RDP_GETOM_CYCLE_TYPE(rdpState.otherModes)==1)? 0:tilenum, y2-y1, 1);
   if (t2)
     rglPrepareRendering(1, tilenum+1, y2-y1, 1);
   else if (!t1)
@@ -83,10 +121,9 @@ void rglTextureRectangle(rdpTexRect_t * rect, int flip)
 //   if (/*!tile.mt && */tile.mask_t)
 //     t &= (1<<tile.mask_t+10) - 1;
 
-	int height = (vi_control & 0x40) ? 479 : 239;
 #define XSCALE(x) (float(x))
 #define YSCALE(y) (float(y))
-#define ZSCALE(z) (float(uint32_t(z))/0xffff)
+#define ZSCALE(z) (zscale(z))
 #define SSCALE(s) (float(s)/(1 << 10))
 #define TSCALE(s) (float(s)/(1 << 10))
 // #define glTexCoord2f(s, t) printf("tex %g %g\n", s, t), glTexCoord2f(s, t)
@@ -128,29 +165,17 @@ void rglTextureRectangle(rdpTexRect_t * rect, int flip)
     }
   }
 
-  if (flip) {
-    vtx->t = SSCALE(s2); vtx->s = TSCALE(t);
-  } else {
-    vtx->s = SSCALE(s2); vtx->t = TSCALE(t);
-  }
+  if (flip) { vtx->t = SSCALE(s2); vtx->s = TSCALE(t);
+  } else {    vtx->s = SSCALE(s2); vtx->t = TSCALE(t);  }
   vtx->x = XSCALE(x2); vtx->y = YSCALE(y1); vtx->z = ZSCALE(z); vtx++->w = 1;
-  if (flip) {
-    vtx->t = SSCALE(s); vtx->s = TSCALE(t);
-  } else {
-    vtx->s = SSCALE(s); vtx->t = TSCALE(t);
-  }
+  if (flip) { vtx->t = SSCALE(s); vtx->s = TSCALE(t);
+  } else {    vtx->s = SSCALE(s); vtx->t = TSCALE(t);  }
   vtx->x = XSCALE(x1); vtx->y = YSCALE(y1); vtx->z = ZSCALE(z); vtx++->w = 1;
-  if (flip) {
-    vtx->t = SSCALE(s2); vtx->s = TSCALE(tr);
-  } else {
-    vtx->s = SSCALE(s2); vtx->t = TSCALE(tr);
-  }
+  if (flip) { vtx->t = SSCALE(s2); vtx->s = TSCALE(tr);
+  } else {    vtx->s = SSCALE(s2); vtx->t = TSCALE(tr);  }
   vtx->x = XSCALE(x2); vtx->y = YSCALE(y2); vtx->z = ZSCALE(z); vtx++->w = 1;
-  if (flip) {
-    vtx->t = SSCALE(s); vtx->s = TSCALE(tr);
-  } else {
-    vtx->s = SSCALE(s); vtx->t = TSCALE(tr);
-  }
+  if (flip) { vtx->t = SSCALE(s); vtx->s = TSCALE(tr);
+  } else {    vtx->s = SSCALE(s); vtx->t = TSCALE(tr);  }
   vtx->x = XSCALE(x1); vtx->y = YSCALE(y2); vtx->z = ZSCALE(z); vtx++->w = 1;
   
   strip->nbVtxs = vtx - strip->vtxs;
@@ -190,9 +215,11 @@ void rglFillRectangle(rdpRect_t * rect)
 // 		y2 -= 1;
 	}
 
+  if (x2 < x1) x2 = x1+1; // black gauge in SCARS (E)
+
 #define XSCALE(x) (float(x))
 #define YSCALE(y) (float(y))
-#define ZSCALE(z) (float(uint32_t(z))/0xffff)
+#define ZSCALE(z) (zscale(z))
 
   if (RDP_GETOM_Z_SOURCE_SEL(rdpState.otherModes))
     z = rdpState.primitiveZ;
@@ -248,11 +275,11 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
   int t1 = (texture && rglT1Usage(rdpState))? RGL_STRIP_TEX1:0;
   int t2 = (texture && tilenum < 7 && rglT2Usage(rdpState))? RGL_STRIP_TEX2:0;
   if (t1)
-    rglPrepareRendering(1, tilenum==7? 0:tilenum, 0, zbuffer);
+    rglPrepareRendering(1, (tilenum==7 && RDP_GETOM_CYCLE_TYPE(rdpState.otherModes)==1)? 0:tilenum, 0, zbuffer);
   if (t2)
     rglPrepareRendering(1, tilenum+1, 0, zbuffer);
   else if (!t1)
-    rglPrepareRendering(0, tilenum==7? 0:tilenum, 0, zbuffer);
+    rglPrepareRendering(0, 0, 0, zbuffer);
 
   curRBuffer->flags |= RGL_RB_HASTRIANGLES;
     
@@ -288,7 +315,7 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
   if (yh & (0x800<<2)) yh |= 0xfffff000<<2;
 
   yh &= ~3;
-
+  
 	r = 0xff;	g = 0xff;	b = 0xff;	a = 0xff;	z = 0xffff0000;	s = 0;	t = 0;	w = 0x30000;
 	dr = 0;		dg = 0;		db = 0;		da = 0;
 
@@ -372,8 +399,9 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
   //rglAssert(j >= 0);
 #define XSCALE(x) (float(x)/(1<<18))
 #define YSCALE(y) (float(y)/(1<<2))
-#define ZSCALE(z) (RDP_GETOM_Z_SOURCE_SEL(rdpState.otherModes)? float(uint32_t(rdpState.primitiveZ))/0xffff : float(uint32_t(z))/0xffff0000)
-#define WSCALE(z) (RDP_GETOM_PERSP_TEX_EN(rdpState.otherModes)? (float(uint32_t(z) + 0x10000)/0xffff0000) : 1.0f)
+#define ZSCALE(z) (RDP_GETOM_Z_SOURCE_SEL(rdpState.otherModes)? zscale(rdpState.primitiveZ) : zscale(z>>16))
+#define WSCALE(z) 1.0f/(RDP_GETOM_PERSP_TEX_EN(rdpState.otherModes)? (float(uint32_t(z) + 0x10000)/0xffff0000) : 1.0f)
+  //#define WSCALE(w) (RDP_GETOM_PERSP_TEX_EN(rdpState.otherModes)? 65536.0f*65536.0f/float((w+ 0x10000)) : 1.0f)
 #define CSCALE(c) (((c)>0x3ff0000? 0x3ff0000:((c)<0? 0 : (c)))>>18)
 #define _PERSP(w) ( w )
 #define PERSP(s, w) ( ((int64_t)(s) << 20) / (_PERSP(w)? _PERSP(w):1) )
@@ -411,7 +439,7 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
       vtx->x = XSCALE(xleft);
       vtx->y = YSCALE(yh);
       vtx->z = ZSCALE(z+dzdx*dx);
-      vtx->w = 1.0f/WSCALE(w+dwdx*dx);
+      vtx->w = WSCALE(w+dwdx*dx);
       vtx++;
     }
     if ((!flip/* && xleft < xright*/) ||
@@ -430,7 +458,7 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
       vtx->x = XSCALE(xright);
       vtx->y = YSCALE(yh);
       vtx->z = ZSCALE(z);
-      vtx->w = 1.0f/WSCALE(w);
+      vtx->w = WSCALE(w);
       vtx++;
     }
   }
@@ -461,7 +489,7 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
       vtx->x = XSCALE(xleft);
       vtx->y = YSCALE(ym);
       vtx->z = ZSCALE(z+dzdx*dx);
-      vtx->w = 1.0f/WSCALE(w+dwdx*dx);
+      vtx->w = WSCALE(w+dwdx*dx);
       vtx++;
     }
     if ((!flip/* && xleft <= xright*/) ||
@@ -480,7 +508,7 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
       vtx->x = XSCALE(xright);
       vtx->y = YSCALE(ym);
       vtx->z = ZSCALE(z);
-      vtx->w = 1.0f/WSCALE(w);
+      vtx->w = WSCALE(w);
       vtx++;
     }
   }
@@ -525,7 +553,7 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
       vtx->x = XSCALE(xleft);
       vtx->y = YSCALE(yl);
       vtx->z = ZSCALE(z+dzdx*dx);
-      vtx->w = 1.0f/WSCALE(w+dwdx*dx);
+      vtx->w = WSCALE(w+dwdx*dx);
       vtx++;
     }
     if ((!flip/* && xleft <= xright*/) ||
@@ -544,7 +572,7 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
       vtx->x = XSCALE(xright);
       vtx->y = YSCALE(yl);
       vtx->z = ZSCALE(z);
-      vtx->w = 1.0f/WSCALE(w);
+      vtx->w = WSCALE(w);
       vtx++;
     }
   }

@@ -54,6 +54,8 @@
  *
  * - need to sort out combiner clamp modes
  *  --> started but not complete
+ *  --> the problem is much more complicated, it's not combiner clamping
+ *      but coverage calculation modes.
  *
  * - fog !!
  *  --> done
@@ -68,6 +70,8 @@
  *   --> completely fixed at last (the sky uses tex2 in the second combiner cycle,
  *       which should be interpreted as tex1 (apparently tex2 isn't available in the
  *       second cycle)
+ *       UPDATE : in fact tex1 and tex2 need to be swapped in the second step of
+ *                the combiner, weird but it fixes a few other problems as well
  *
  */
 
@@ -173,12 +177,6 @@ int rglScreenWidth = 320, rglScreenHeight = 240;
 //    LOGERROR("framebuffer INCOMPLETE_DUPLICATE_ATTACHMENT\n");\
 //    break; \
 
-
-
-void check()
-{
-  // a place where to put some sanity checks
-}
 
 rglDepthBuffer_t * rglFindDepthBuffer(uint32_t address, int width, int height)
 {
@@ -754,7 +752,7 @@ void rglRenderChunks(int upto)
       rglStrip_t & strip = chunk.strips[j];
       int k;
       int tilenum = strip.tilenum;
-      if (tilenum == 7) {
+      if (tilenum == 7 && RDP_GETOM_CYCLE_TYPE(chunk.rdpState.otherModes)==1) {
         tilenum = 0;
         combFormat |= RGL_COMB_TILE7;        
       }
@@ -792,12 +790,7 @@ void rglRenderChunks(int upto)
           glDisable(GL_DEPTH_TEST);
 
         if (!(strip.flags & RGL_STRIP_SHADE))
-          // Check this, this will be the uniform SHADE color in non shading mode
-          // --> apparently it is correct to use fillColor, not primColor
-//           glColor4f(RDP_GETC32_R(chunk.rdpState.primColor)/255.0f,
-//                     RDP_GETC32_G(chunk.rdpState.primColor)/255.0f,
-//                     RDP_GETC32_B(chunk.rdpState.primColor)/255.0f,
-//                     RDP_GETC32_A(chunk.rdpState.primColor)/255.0f);
+          // TODO take in account the framebuffer size (16b or 32b)
           glColor4f(RDP_GETC16_R(chunk.rdpState.fillColor)/31.0f,
                     RDP_GETC16_G(chunk.rdpState.fillColor)/31.0f,
                     RDP_GETC16_B(chunk.rdpState.fillColor)/31.0f,
@@ -867,6 +860,7 @@ void rglRenderChunks(int upto)
         if (buffer.flags & RGL_RB_DEPTH)
           glVertex3f((strip.vtxs[k].x/(buffer.width)),
                      (strip.vtxs[k].y/(buffer.height)),
+                     //rglZscale(chunk.rdpState.fillColor&0xffff));
                      float(chunk.rdpState.fillColor&0xffff)/0xffff);
 //           glVertex4f((strip.vtxs[k].x/(buffer.width))*strip.vtxs[k].w,
 //                      (strip.vtxs[k].y/(buffer.height))*strip.vtxs[k].w,
@@ -942,6 +936,12 @@ void rglDisplayFramebuffers()
 
   if (!(vi_control & 3))
     return;
+
+#ifdef RDP_DEBUG
+  extern int nbFullSync;
+  LOG("nbFyllSync %d\n", nbFullSync);
+  nbFullSync = 0;
+#endif
   
   int height = (vi_control & 0x40) ? 480 : 240;
   int width = vi_width;
@@ -1083,8 +1083,6 @@ void rglDisplayFramebuffers()
 void rglUpdate()
 {
   int i;
-
-  check();
   
   if (old_vi_origin == vi_origin) {
     //printf("same\n");
@@ -1152,7 +1150,9 @@ void rglUpdate()
     }
   }
 #endif
-
+#endif
+  
+#ifdef RDP_DEBUG
   rdpTracePos = 0;
 #endif
 
@@ -1424,7 +1424,7 @@ int rglInit()
 
 EXPORT void CALL FBWrite(DWORD addr, DWORD size)
 {
-  if (!rglSettings.fbInfo)
+  if (!rglSettings.fbInfo || rglSettings.async)
     return;
   //LOG("FBWrite %x\n", addr);
   rglRenderBuffer_t * buffer;
@@ -1448,7 +1448,7 @@ EXPORT void CALL FBWList(FrameBufferModifyEntry *plist, DWORD size)
 
 EXPORT void CALL FBRead(DWORD addr)
 {
-  if (!rglSettings.fbInfo)
+  if (!rglSettings.fbInfo || rglSettings.async)
     return;
   //LOG("FBRead %x\n", addr);
   rglRenderBuffer_t * buffer;
@@ -1501,6 +1501,21 @@ EXPORT void CALL FBGetFrameBufferInfo(void *p)
   }
 }
 
+static char exptable[256];
+
+static void build_exptable()
+{
+  LOG("Building depth exp table\n");
+  int i;
+  for (i=0; i<256; i++) {
+    int s;
+    for (s=0; s<7; s++)
+      if (!(i&(1<<6-s)))
+        break;
+    exptable[i] = s;
+  }
+}
+
 void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t stop)
 {
   int depth;
@@ -1515,6 +1530,7 @@ void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t s
 //   rglAssert (buffer.area.xh != 8192);
 
   depth = buffer.flags & RGL_RB_DEPTH;
+  //depth = 1;
 
   int glfmt, packed;
   int x, y;
@@ -1524,8 +1540,8 @@ void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t s
   static uint8_t * fb = rglTmpTex;
   if (depth) {
     glfmt = GL_DEPTH_COMPONENT;
-    packed = GL_UNSIGNED_SHORT;
-    //packed = GL_FLOAT;
+    //packed = GL_UNSIGNED_SHORT;
+    packed = GL_FLOAT;
   } else {
     glfmt = GL_RGBA;
     packed = GL_UNSIGNED_BYTE;
@@ -1593,10 +1609,19 @@ void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t s
 
 
   if (depth) {
+    if (!exptable[255])
+      build_exptable();
     for (x=rx; x<rx+rw; x++) 
       for (y=ry; y<ry+rh; y++) {
+        uint32_t a = *(float *)&fb[(x-rx)*4 + (y-ry)*rw*4] * ((1<<18)-1);
+        //uint32_t a = uint32_t(*(uint16_t *)&fb[(x-rx)*4 + (y-ry)*rw*4]) << 2;
+        int e = exptable[a>>18-8];
+
+        a = ( ( (e>=6? a : (a>>6-e)) & ((1<<11)-1) ) << 2 ) | (e<<16-3);
+        
         *(uint16_t *)&ram[x*2 + y*buffer.line ^ 2] =
-          int(*(uint16_t *)&fb[(x-rx)*2 + (y-ry)*rw*2])-2;
+          a;
+          //int(*(uint16_t *)&fb[(x-rx)*2 + (y-ry)*rw*2])-2;
         //(*(uint16_t *)&fb[(x-rx)*2 + (y-ry)*rw*2] - int(0x8000))*2;
         //(*(float *)&fb[(x-rx)*4 + (y-ry)*rw*4]-0.5)*0x1ffff;
       }

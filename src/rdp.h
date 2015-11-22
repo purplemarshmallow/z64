@@ -239,6 +239,7 @@ uint32_t rdpGetTmemOrigin(int tmem, int * line, int * stop, int * fromFormat, in
 int rdp_init();
 int rdp_dasm(uint32_t * rdp_cmd_data, int rdp_cmd_cur, int length, char *buffer);
 void rdp_process_list(void);
+int rdp_store_list(void);
 
 
 #include <stdarg.h>

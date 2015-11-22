@@ -374,6 +374,7 @@ void rglDisplayChunkInfo(rglRenderChunk_t & chunk)
     y -= FS;
   }
   if (cycle == 1) {
+  //if (cycle < 2) {
     gglPrintf(x, y,
               "c = [ (%s - %s) * %s + %s | (%s - %s) * %s + %s ];",
               saRGBText[RDP_GETCM_SUB_A_RGB1(state.combineModes)],
@@ -399,6 +400,7 @@ void rglDisplayChunkInfo(rglRenderChunk_t & chunk)
     y -= FS;
   }
   if (cycle == 1) {
+  //if (cycle < 2) {
     gglPrintf(x, y,
               "%s*%s + %s*%s"
               ,bAText[0][RDP_GETOM_BLEND_M1B_1(state.otherModes)],

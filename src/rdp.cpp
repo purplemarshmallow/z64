@@ -54,9 +54,11 @@ static int nbTmemAreas;
 int rdp_dump;
 #endif
 
-static uint32_t rdp_cmd_data[0x100000];
-static int rdp_cmd_ptr = 0;
-static int rdp_cmd_cur = 0;
+#define MAXCMD 0x100000
+static uint32_t rdp_cmd_data[MAXCMD+32];
+static volatile int rdp_cmd_ptr = 0;
+static volatile int rdp_cmd_cur = 0;
+static int rdp_cmd_left = 0;
 
 #ifdef RDP_DEBUG
 uint32_t rdpTraceBuf[0x100000];
@@ -197,7 +199,7 @@ static const int rdp_command_length[64] =
 
 static void rdp_invalid(uint32_t w1, uint32_t w2)
 {
-	FATAL("RDP: invalid command  %d, %08X %08X\n", (w1 >> 24) & 0x3f, w1, w2);
+  LOGERROR("RDP: invalid command  %d, %08X %08X\n", (w1 >> 24) & 0x3f, w1, w2);
 }
 
 static void rdp_noop(uint32_t w1, uint32_t w2)
@@ -307,14 +309,26 @@ static void rdp_sync_tile(uint32_t w1, uint32_t w2)
 	// Nothing to do?
 }
 
+void rdpSignalFullSync();
+void rdpWaitFullSync();
+#ifdef RDP_DEBUG
+int nbFullSync;
+#endif
 static void rdp_sync_full(uint32_t w1, uint32_t w2)
 {
   //printf("full sync\n");
   rglFullSync();
   rglUpdate();
 
-  *gfx.MI_INTR_REG |= 0x20;
-  gfx.CheckInterrupts();
+  if (rglSettings.async)
+    rdpSignalFullSync();
+  else {
+    *gfx.MI_INTR_REG |= 0x20;
+    gfx.CheckInterrupts();
+  }
+#ifdef RDP_DEBUG
+  nbFullSync++;
+#endif
 }
 
 static void rdp_set_key_gb(uint32_t w1, uint32_t w2)
@@ -721,49 +735,17 @@ void rdp_process_list(void)
 	uint32_t cmd, length, cmd_length;
 
   rglUpdateStatus();
-  rglUpdate();
-
+  if (!rglSettings.threaded)
+    rdp_store_list();
+  
   if (rglStatus == RGL_STATUS_CLOSED)
     return;
 
-//   while (dp_current < dp_end) {
-    
-//   }
-//   dp_status &= ~0x0002;
+  // this causes problem with depth writeback in zelda mm
+  // but is necessary for in fisherman
+  rglUpdate();
 
-#if 1
-	length = dp_end - dp_current;
-
-//   LOG("rdp start %x cur %x end %x length %d dp_status %x\n",
-//       dp_start, dp_current, dp_end,
-//       length, dp_status);
-
-  if (dp_end <= dp_current) {
-    return;
-  }
-
-	// load command data
-	for (i=0; i < length; i += 4)
-	{
-		rdp_cmd_data[rdp_cmd_ptr++] = READ_RDP_DATA(dp_current + i);
-		if (rdp_cmd_ptr >= 0x100000)
-		{
-			LOG("rdp_process_list: rdp_cmd_ptr overflow %x %x --> %x\n", length, dp_current, dp_end);
-		}
-	}
-
-	cmd = (rdp_cmd_data[0] >> 24) & 0x3f;
-	cmd_length = (rdp_cmd_ptr + 1) * 4;
-
-	dp_current += length;
-
-	// check if more data is needed
-	if (cmd_length < rdp_command_length[cmd])
-	{
-		return;
-	}
-
-	while (rdp_cmd_cur < rdp_cmd_ptr)
+	while (rdp_cmd_cur != rdp_cmd_ptr)
 	{
 		cmd = (rdp_cmd_data[rdp_cmd_cur] >> 24) & 0x3f;
 	//  if (((rdp_cmd_data[rdp_cmd_cur] >> 24) & 0xc0) != 0xc0)
@@ -771,10 +753,11 @@ void rdp_process_list(void)
 	//      LOGERROR("rdp_process_list: invalid rdp command %08X at %08X\n", rdp_cmd_data[rdp_cmd_cur], dp_start+(rdp_cmd_cur * 4));
 	//  }
 
-		if (((rdp_cmd_ptr-rdp_cmd_cur) * 4) < rdp_command_length[cmd])
+		if ((((rdp_cmd_ptr-rdp_cmd_cur)&(MAXCMD-1)) * 4) < rdp_command_length[cmd])
 		{
-			LOGERROR("rdp_process_list: not enough rdp command data: cur = %d, ptr = %d, expected = %d\n", rdp_cmd_cur, rdp_cmd_ptr, rdp_command_length[cmd]);
-			return;
+// 			LOGERROR("rdp_process_list: not enough rdp command data: cur = %d, ptr = %d, expected = %d\n", rdp_cmd_cur, rdp_cmd_ptr, rdp_command_length[cmd]);
+// 			return;
+      break;
 		}
 
 #ifdef RDP_DEBUG
@@ -791,6 +774,9 @@ void rdp_process_list(void)
 #ifdef RDP_DEBUG
     memcpy(rdpTraceBuf+rdpTracePos, rdp_cmd_data+rdp_cmd_cur, rdp_command_length[cmd]);
 #endif
+
+    if (rdp_cmd_cur + rdp_command_length[cmd]/4 > MAXCMD)
+      memcpy(rdp_cmd_data + MAXCMD, rdp_cmd_data, rdp_command_length[cmd] - (MAXCMD - rdp_cmd_cur)*4);
     
 		// execute the command
 		rdp_command_table[cmd](rdp_cmd_data[rdp_cmd_cur+0], rdp_cmd_data[rdp_cmd_cur+1]);
@@ -800,22 +786,68 @@ void rdp_process_list(void)
     rglAssert(rdpTracePos < sizeof(rdpTraceBuf)/sizeof(rdpTraceBuf[0]));
 #endif
 
-		rdp_cmd_cur += rdp_command_length[cmd] / 4;
+		rdp_cmd_cur = (rdp_cmd_cur + rdp_command_length[cmd] / 4) & (MAXCMD-1);
 	}
-	rdp_cmd_ptr = 0;
-	rdp_cmd_cur = 0;
 
 // 	dp_current = dp_end;
 // 	dp_start = dp_end;
 	dp_start = dp_current;
 
   dp_status &= ~0x0002;
-#endif
+}
+
+int rdp_store_list(void)
+{
+	int i;
+	uint32_t data, cmd, length;
+  int sync = 0;
+
+//   while (dp_current < dp_end) {
+    
+//   }
+//   dp_status &= ~0x0002;
+
+	length = dp_end - dp_current;
+
+//   LOG("rdp start %x cur %x end %x length %d dp_status %x\n",
+//       dp_start, dp_current, dp_end,
+//       length, dp_status);
+
+  if (dp_end <= dp_current) {
+    return 0;
+  }
+
+	// load command data
+	for (i=0; i < length; i += 4)
+	{
+    data = READ_RDP_DATA(dp_current + i);
+    if (rglSettings.async) {
+      if (rdp_cmd_left) {
+        rdp_cmd_left--;
+      } else {
+        cmd = (data >> 24) & 0x3f;
+        rdp_cmd_left = rdp_command_length[cmd]/4-1;
+        if (cmd == 0x29) // full_sync
+          sync = 1;
+      }
+    }
+    rdp_cmd_data[rdp_cmd_ptr] = data;
+    rdp_cmd_ptr = (rdp_cmd_ptr + 1) & (MAXCMD-1);
+	}
+
+	dp_current += length;
+
+  return sync;
 }
 
 
 int rdp_init()
 {
+  rdp_cmd_cur = rdp_cmd_ptr = 0;
+  rdp_cmd_left = 0;
+#ifdef RDP_DEBUG
+  rdpTracePos = 0;
+#endif
   nbTmemAreas = 0;
   return rglInit();
 }

@@ -24,11 +24,6 @@
 
 #include <SDL/SDL.h>
 
-// try to take in account dithering modes
-// this is mainly a huge hack for Mario Tennis, there are very mysterious things
-// happening in that game
-//#define DITHER
-
 void rglRenderMode(rglRenderChunk_t & chunk)
 {
   int i;
@@ -43,6 +38,7 @@ void rglRenderMode(rglRenderChunk_t & chunk)
     glDepthMask(GL_FALSE);
     glDepthFunc(GL_ALWAYS);
   }
+
 
 //   if (RDP_GETOM_Z_MODE(chunk.rdpState.otherModes) & 1) {
 //     glEnable( GL_POLYGON_OFFSET_FILL );
@@ -88,6 +84,7 @@ void rglClearCombiners()
 
 int rglT1Usage(rdpState_t & state)
 {
+  //return 1;
   int cycle = RDP_GETOM_CYCLE_TYPE(state.otherModes);
   if (cycle == RDP_CYCLE_TYPE_COPY) return 1;
   if (cycle >= 2) return 0;
@@ -122,6 +119,7 @@ int rglT1Usage(rdpState_t & state)
 }
 int rglT2Usage(rdpState_t & state)
 {
+  //return 1;
   int cycle = RDP_GETOM_CYCLE_TYPE(state.otherModes);
   if (cycle >= 2) return 0;
   if (cycle == 1 && (
@@ -457,27 +455,22 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
 
   char * comb, * comb2;
   comb2 = 0;
-  switch (RDP_GETOM_CVG_DEST(state.otherModes))
-  {
-    // TODO find the meaning of the other values
-//     case 1:
-//       comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s); c.a *= dot(vec3(c), vec3(1.0/3, 1.0/3, 1.0/3));\n";
+//   switch (RDP_GETOM_CVG_DEST(state.otherModes))
+//   {
+//     case 3:
+//       comb = "c = clamp(vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s), 0.0, 1.0);\n";
 //       break;
-    case 3:
-      comb = "c = clamp(vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s), 0.0, 1.0);\n";
-      break;
-    case 2:
-      comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s);\n";
-      break;
-    case 0:
-      // ?? why did I do that ?
-      //comb2 = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), c.a);\n";
-    case 1:
-    //case 2:
-      // GCC BUG here, the default clause is being ignored with -O0 optimization level
-      comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s);\n";
-      break;
-  }
+//     case 2:
+//       comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s);\n";
+//       //comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), t1.a*((%s - %s) * %s + %s));\n";
+//       break;
+//     case 0:
+//       //comb2 = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), t1.a);\n";
+//     case 1:
+//       comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s);\n";
+//       break;
+//   }
+  comb = "c = clamp(vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s), 0.0, 1.0);\n";
   strcpy(prim_lod_frac, "0.5/*PRIM_LOD_FRAC*/");
   strcpy(t1, "t1");
   strcpy(t1a, "t1.a");
@@ -529,22 +522,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
       );
   }
 
-#ifdef DITHER
-  if (
-    //RDP_GETOM_RGB_DITHER_SEL(state.otherModes)
-    //&&
-    RDP_GETOM_ALPHA_DITHER_SEL(state.otherModes)
-    &&
-    RDP_GETOM_ALPHA_CVG_SELECT(chunk.rdpState.otherModes)
-//     RDP_GETOM_ALPHA_CVG_SELECT(chunk.rdpState.otherModes)&&
-//     RDP_GETOM_RGB_DITHER_SEL(chunk.rdpState.otherModes)
-  )
-    p +=
-      sprintf(
-        p, "c.a = dot(vec3(c), vec3(1.0/3, 1.0/3, 1.0/3));\n");
-#endif
-  
-//   if (RDP_GETOM_CVG_TIMES_ALPHA(state.otherModes))
+//   if (!RDP_GETOM_CVG_TIMES_ALPHA(state.otherModes))
 //     p += sprintf(p, "c.a = t1.a; \n");
 
   p += sprintf(p, alphaTest);
@@ -552,26 +530,8 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
 
   char * blender;
   char * noblender;
-  // FIXME c'est a priori n'importe quoi :)
-  switch (RDP_GETOM_CVG_DEST(state.otherModes)) {
-//     case 0:
-//       blender = "c = vec4(float(%s)*vec3(%s) + float(%s)*vec3(%s), 0); \n";
-//       noblender = "";
-//       break;
-#ifndef DITHER
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      blender = "c = vec4(float(%s)*vec3(%s) + float(%s)*vec3(%s), 1.0); \n";
-      noblender = "c.a = 1.0;\n";
-      break;
-#else
-    default:
-      blender = "c = vec4(float(%s)*vec3(%s) + float(%s)*vec3(%s), c.a); \n";
-      noblender = "";
-#endif
-  }
+  blender = "c = vec4(float(%s)*vec3(%s) + float(%s)*vec3(%s), 1.0); \n";
+  noblender = "c.a = 1.0;\n";
 
   int m1b, m1a, m2b, m2a;
 
@@ -754,16 +714,6 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   rglAssert(glGetError() == GL_NO_ERROR);
 #endif
 
-#ifdef DITHER
-  if (
-    RDP_GETOM_RGB_DITHER_SEL(state.otherModes) &&
-    RDP_GETOM_ALPHA_DITHER_SEL(state.otherModes)
-  ) {
-    c->srcBlend = GL_SRC_ALPHA;
-    c->dstBlend = GL_ONE_MINUS_SRC_ALPHA;
-  }
-#endif
-  
 ok:;
 #ifndef RGL_EXACT_BLEND
   if ((format & RGL_COMB_FMT) == RGL_COMB_FMT_DEPTH ||
@@ -771,11 +721,7 @@ ok:;
     glDisable(GL_BLEND);
   else {
     glEnable(GL_BLEND);
-    if ((format & RGL_COMB_FMT) == RGL_COMB_FMT_RGBA
-#ifdef DITHER
-        && !RDP_GETOM_ALPHA_CVG_SELECT(chunk.rdpState.otherModes)
-#endif
-    )
+    if ((format & RGL_COMB_FMT) == RGL_COMB_FMT_RGBA)
       glBlendFuncSeparate(c->srcBlend, c->dstBlend, GL_ZERO, GL_ONE);
     else
       glBlendFunc(c->srcBlend, c->dstBlend);

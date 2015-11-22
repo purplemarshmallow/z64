@@ -130,8 +130,6 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
 
   if (!line) line = 1;
 
-  check();
-
   //tile.format = ti_format;
 
   if (tile.size == 3) line <<= 1; // why why WHY ?
@@ -174,7 +172,8 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
 //   }
 
   if (recth && tile.h == 1)
-    tile.h = recth;
+    // +1 for yoshi
+    tile.h = recth+1;
   
   if (/*tile.h == 1 || */tile.w*tile.h << tile.size >> 1 > 0x1000-tile.tmem) {
     DUMP("fixing tile size from %dx%d to ", tile.w, tile.h);
@@ -365,7 +364,8 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
   rglTextureHead_t * list;
 
 #if 1
-  if (tile.format == RDP_FORMAT_CI) {
+  if (tile.format == RDP_FORMAT_CI ||
+      (tile.size <= 1 && RDP_GETOM_EN_TLUT(rdpState.otherModes))) {
     // tlut crc
     h = tile.size? 256:16;
     if (tile.size == 0) palette = (tile.palette<<4)&0xff;
@@ -473,17 +473,17 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
 
   i = tile.format;
 
-  if (tile.size <= 1 && i == RDP_FORMAT_RGBA) {
-    LOG("fixing RGBA tile to CI\n");
-    i = RDP_FORMAT_CI;
-  }
-
   // in Tom Clancy, they do this, using I texture with TLUT enabled
   if (i != RDP_FORMAT_CI && tile.size <= 1 && RDP_GETOM_EN_TLUT(rdpState.otherModes)) {
     LOG("fixing %s-%d tile to CI\n", rdpImageFormats[i], tile.size);
     i = RDP_FORMAT_CI;
   }
   
+  if (tile.size <= 1 && i == RDP_FORMAT_RGBA) {
+    LOG("fixing RGBA tile to I\n");
+    i = RDP_FORMAT_I;
+  }
+
   switch (i) {
     case RDP_FORMAT_CI: {
       if (!RDP_GETOM_TLUT_TYPE(rdpState.otherModes)) {
@@ -654,8 +654,6 @@ ok2:
   rglTexCache[tile.tmem].tex = tex;
 
 ok:
-  check();
-
   rtile.tex = tex;
 
   {
