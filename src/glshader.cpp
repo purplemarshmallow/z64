@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "rgl_assert.h"
-#include <GL/glew.h>
+#include "GL/glew.h"
 #include <GL/gl.h>
-#include <GL/glext.h>
+#include "GL/glext.h"
 #include "glshader.h"
 
 static void printInfoLog(GLhandleARB obj, const char * src)
@@ -63,8 +63,8 @@ rglShader_t * rglCreateShader(const char * vsrc, const char * fsrc)
   s->prog = prog;
   //LOG("Creating shader %d %d %d\n", s->vs, s->fs, s->prog);
 #ifdef RDP_DEBUG
-  s->vsrc = strdup(vsrc);
-  s->fsrc = strdup(fsrc);
+  s->vsrc = _strdup(vsrc);
+  s->fsrc = _strdup(fsrc);
 #endif
   return s;
 }

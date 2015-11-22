@@ -144,7 +144,7 @@ char * rglCombiner2String(rdpState_t & state)
 
 #include "rgl_glut.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 #include <IL/il.h>
 #include <assert.h>
 

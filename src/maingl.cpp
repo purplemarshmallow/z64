@@ -23,7 +23,7 @@
 #include "rgl.h"
 #include "rgl_glut.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #define THREADED
 #ifdef WIN32

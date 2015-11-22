@@ -25,7 +25,7 @@
 #include "rgl_assert.h"
 #include "rdp.h"
 
-#include <GL/glew.h>
+#include "GL/glew.h"
 #include <GL/gl.h>
 
 #ifdef RDP_DEBUG

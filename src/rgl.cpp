@@ -80,7 +80,7 @@
 #include "rgl.h"
 #include "rgl_glut.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 //#define NOFBO
 #define ZTEX
@@ -1420,6 +1420,8 @@ int rglInit()
   );
 
   rdpChanged = ~0;
+
+  return 1;
 }
 
 EXPORT void CALL FBWrite(DWORD addr, DWORD size)

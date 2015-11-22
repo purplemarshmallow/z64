@@ -36,7 +36,7 @@ int rglReadSettings()
 
 #ifdef WIN32
   if (!rgl_cwd[0]) {
-    getcwd(rgl_cwd, 512-32);
+    _getcwd(rgl_cwd, 512-32);
     LOG("getcwd = '%s'\n", rgl_cwd);
   }
   sprintf(line, "%s/Plugin/z64gl.conf", rgl_cwd);

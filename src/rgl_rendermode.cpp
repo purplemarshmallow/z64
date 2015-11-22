@@ -22,7 +22,7 @@
 #include "rdp.h"
 #include "rgl.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 void rglRenderMode(rglRenderChunk_t & chunk)
 {
@@ -224,7 +224,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   char * p;
   char * alphaTest;
   char * alphaTest2;
-  char * write;
+  static char * write;
   static char src[4*4096];
 
   float env[4];

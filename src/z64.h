@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #define DACRATE_NTSC	(48681812)
 #define DACRATE_PAL	(49656530)
