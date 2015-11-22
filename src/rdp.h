@@ -250,6 +250,19 @@ static void FATAL(const char * s, ...)
   va_end(ap);
   exit(0);
 }
+#ifndef WIN32
+#define RDP_DEBUG
+#endif
+
+#ifdef RDP_DEBUG
+
+extern uint32_t rdpTraceBuf[];
+extern int rdpTracePos;
+
+extern int rdp_dump;
+
+#define DUMP if (!rdp_dump) ; else LOG
+
 static void LOG(const char * s, ...)
 {
   va_list ap;
@@ -259,23 +272,13 @@ static void LOG(const char * s, ...)
 }
 #define LOGERROR LOG
 
-#ifndef WIN32
-#define RDP_DEBUG
-#endif
-#ifdef RDP_DEBUG
-
-extern uint32_t rdpTraceBuf[];
-extern int rdpTracePos;
-
-extern int rdp_dump;
-
-#define DUMP if (rdp_dump) LOG
-
-#else
+#else // RDP_DEBUG
 
 #define DUMP(...)
+#define LOG(...)
+#define LOGERROR(...)
 
-#endif
+#endif // RDP_DEBUG
 
 
 #endif // _RDP_H_

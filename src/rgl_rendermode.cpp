@@ -92,15 +92,15 @@ int rglT1Usage(rdpState_t & state)
   if (cycle == RDP_CYCLE_TYPE_COPY) return 1;
   if (cycle >= 2) return 0;
   if (cycle == 1 && (
-        RDP_GETCM_SUB_A_RGB1(state.combineModes)==1 ||
-        RDP_GETCM_SUB_B_RGB1(state.combineModes)==1 ||
-        RDP_GETCM_MUL_RGB1(state.combineModes)==1 ||
-        RDP_GETCM_MUL_RGB1(state.combineModes)==8 ||
-        RDP_GETCM_ADD_RGB1(state.combineModes)==1 ||
-        RDP_GETCM_SUB_A_A1(state.combineModes)==1 ||
-        RDP_GETCM_SUB_B_A1(state.combineModes)==1 ||
-        RDP_GETCM_MUL_A1(state.combineModes)==1 ||
-        RDP_GETCM_ADD_A1(state.combineModes)==1))
+        RDP_GETCM_SUB_A_RGB1(state.combineModes)==2 ||
+        RDP_GETCM_SUB_B_RGB1(state.combineModes)==2 ||
+        RDP_GETCM_MUL_RGB1(state.combineModes)==2 ||
+        RDP_GETCM_MUL_RGB1(state.combineModes)==9 ||
+        RDP_GETCM_ADD_RGB1(state.combineModes)==2 ||
+        RDP_GETCM_SUB_A_A1(state.combineModes)==2 ||
+        RDP_GETCM_SUB_B_A1(state.combineModes)==2 ||
+        RDP_GETCM_MUL_A1(state.combineModes)==2 ||
+        RDP_GETCM_ADD_A1(state.combineModes)==2))
     return 1;
   if (
     (RDP_GETOM_CVG_TIMES_ALPHA(state.otherModes) &&
@@ -125,16 +125,17 @@ int rglT2Usage(rdpState_t & state)
   int cycle = RDP_GETOM_CYCLE_TYPE(state.otherModes);
   if (cycle >= 2) return 0;
   if (cycle == 1 && (
-        RDP_GETCM_SUB_A_RGB1(state.combineModes)==2 ||
-        RDP_GETCM_SUB_B_RGB1(state.combineModes)==2 ||
-        RDP_GETCM_MUL_RGB1(state.combineModes)==2 ||
-        RDP_GETCM_MUL_RGB1(state.combineModes)==9 ||
-        RDP_GETCM_ADD_RGB1(state.combineModes)==2 ||
-        RDP_GETCM_SUB_A_A1(state.combineModes)==2 ||
-        RDP_GETCM_SUB_B_A1(state.combineModes)==2 ||
-        RDP_GETCM_MUL_A1(state.combineModes)==2 ||
-        RDP_GETCM_ADD_A1(state.combineModes)==2))
+        RDP_GETCM_SUB_A_RGB1(state.combineModes)==1 ||
+        RDP_GETCM_SUB_B_RGB1(state.combineModes)==1 ||
+        RDP_GETCM_MUL_RGB1(state.combineModes)==1 ||
+        RDP_GETCM_MUL_RGB1(state.combineModes)==8 ||
+        RDP_GETCM_ADD_RGB1(state.combineModes)==1 ||
+        RDP_GETCM_SUB_A_A1(state.combineModes)==1 ||
+        RDP_GETCM_SUB_B_A1(state.combineModes)==1 ||
+        RDP_GETCM_MUL_A1(state.combineModes)==1 ||
+        RDP_GETCM_ADD_A1(state.combineModes)==1))
     return 1;
+
   if (
     RDP_GETCM_SUB_A_RGB0(state.combineModes)==2 ||
     RDP_GETCM_SUB_B_RGB0(state.combineModes)==2 ||
@@ -155,26 +156,28 @@ int rglT2Usage(rdpState_t & state)
 void rglSetCombiner(rglRenderChunk_t & chunk, int format)
 {
   static char _1ma[64];
+  static char t1[64];
+  static char t1a[64];
   static char t2[64];
   static char t2a[64];
   static char prim_lod_frac[64];
 
   static const char *saRGB[] = {
-    "c",				"t1",		t2,						"p/*PRIM*/", 
+    "c",				t1,		t2,						"p/*PRIM*/", 
     "gl_Color",	"e",		"1.0/*NOISE*/",	"1.0",
     "0.0",			"0.0",	"0.0",					"0.0",
     "0.0",			"0.0",	"0.0",					"0.0"
   };
   
   static const char *sbRGB[] = {
-    "c",						"t1",			t2,							"p/*PRIM*/", 
+    "c",						t1,			t2,							"p/*PRIM*/", 
     "gl_Color",			"e",			"0.5/*CENTER*/",	"t1/*K4*/",
     "0.0",					"0.0",		"0.0",						"0.0",
     "0.0",					"0.0",		"0.0",						"0.0"
   };
   
   static const char *mRGB[] = {
-    "c",									"t1",									t2,						"p/*PRIM*/", 
+    "c",									t1,									t2,						"p/*PRIM*/", 
     "gl_Color/*SHADE*/",	"e",									"0.0/*SCALE*/",	"c.a/*COMBINED_A*/",
     "t1.a/*TEXEL0_A*/",		"t2.a/*TEXEL1_A*/",		"p.a/*PRIM_A*/",	"gl_Color.a/*SHADEA*/",
     "e.a/*ENV_ALPHA*/",		"0.5/*LOD_FRACTION*/","0.5/*PRIM_LOD_FRAC*/",	"k5/*K5*/",
@@ -185,27 +188,27 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   };
 
   static const char *aRGB[] = {
-    "c",			"t1",			t2,			"p/*PRIM*/", 
+    "c",			t1,			t2,			"p/*PRIM*/", 
     "gl_Color/*SHADE*/",			"e/*ENV*/",		"1.0",				"0.0",
   };
 
   static const char *saA[] = {
-    "c.a",			"t1.a",			t2a,			"p.a/*PRIM*/", 
+    "c.a",			t1a,			t2a,			"p.a/*PRIM*/", 
     "gl_Color.a",			"e.a",		"1.0",				"0.0",
   };
   
   static const char *sbA[] = {
-    "c.a",			"t1.a",			t2a,			"p.a/*PRIM*/", 
+    "c.a",			t1a,			t2a,			"p.a/*PRIM*/", 
     "gl_Color.a",			"e.a",		"1.0",				"0.0",
   };
 
   static const char *mA[] = {
-    "0.5/*LOD_FRACTION*/",		"t1.a",			t2a,			"p.a/*PRIM*/", 
+    "0.5/*LOD_FRACTION*/",		t1a,			t2a,			"p.a/*PRIM*/", 
     "gl_Color.a/*SHADE*/",			"e.a",		prim_lod_frac,	"0.0",
   };
 
   static const char *aA[] = {
-    "c.a",			"t1.a",			t2a,			"p.a/*PRIM*/", 
+    "c.a",			t1a,			t2a,			"p.a/*PRIM*/", 
     "gl_Color.a/*SHADE*/",			"e.a",		"1.0",				"0.0",
   };
   
@@ -362,15 +365,14 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   else if (RDP_GETOM_ALPHA_COMPARE_EN(chunk.rdpState.otherModes) &&
       !RDP_GETOM_ALPHA_CVG_SELECT(chunk.rdpState.otherModes)) {
     if (RDP_GETC32_A(chunk.rdpState.blendColor) > 0) {
-      alphaTest =
-        "if (c.a < b.a) discard; \n";
+      alphaTest = "if (c.a < b.a) discard; \n";
       alphaTest2 =
         "  vec4 b = gl_LightSource[0].ambient;  \n"
         "  if (c.a < b.a) discard; \n";
       //alphaTest2 = "if (c.a < 0.5) discard; \n";
     } else {
       alphaTest = "if (c.a == 0.0) discard; \n";
-      alphaTest2 = alphaTest;
+      alphaTest2 = "if (c.a == 0.0) discard; \n";
     }
   }
 
@@ -453,7 +455,8 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
       break;
   }
 
-  char * comb;
+  char * comb, * comb2;
+  comb2 = 0;
   switch (RDP_GETOM_CVG_DEST(state.otherModes))
   {
     // TODO find the meaning of the other values
@@ -463,16 +466,28 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
     case 3:
       comb = "c = clamp(vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s), 0.0, 1.0);\n";
       break;
-    case 0:
-    case 1:
     case 2:
+      comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s);\n";
+      break;
+    case 0:
+      // ?? why did I do that ?
+      //comb2 = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), c.a);\n";
+    case 1:
+    //case 2:
       // GCC BUG here, the default clause is being ignored with -O0 optimization level
       comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s);\n";
       break;
   }
   strcpy(prim_lod_frac, "0.5/*PRIM_LOD_FRAC*/");
-  strcpy(t2, "t2");
-  strcpy(t2a, "t2.a");
+  strcpy(t1, "t1");
+  strcpy(t1a, "t1.a");
+  if (format & RGL_COMB_TILE7) {
+    strcpy(t2, "t1");
+    strcpy(t2a, "t1.a");
+  } else {
+    strcpy(t2, "t2");
+    strcpy(t2a, "t2.a");
+  }
   p +=
     sprintf(p,
             comb
@@ -488,8 +503,12 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
     );
 
   if (cycle == RDP_CYCLE_TYPE_2) {
-    strcpy(t2, "t1");
-    strcpy(t2a, "t1.a");
+    if (!(format & RGL_COMB_TILE7)) {
+      strcpy(t1, "t2");
+      strcpy(t1a, "t2.a");
+      strcpy(t2, "t1");
+      strcpy(t2a, "t1.a");
+    }
     //strcpy(prim_lod_frac, "0.0/*PRIM_LOD_FRAC*/");
 //     if (!RDP_GETOM_ALPHA_CVG_SELECT(chunk.rdpState.otherModes))
 //       p +=
@@ -497,7 +516,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
     
     p +=
       sprintf(p,
-              comb
+              comb2? comb2 : comb
               ,
               saRGB[RDP_GETCM_SUB_A_RGB1(state.combineModes)],
               saRGB[RDP_GETCM_SUB_B_RGB1(state.combineModes)],

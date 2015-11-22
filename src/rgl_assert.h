@@ -9,6 +9,7 @@ inline void _rglAssert(int test, const char * s, int line, const char * file) {
     fprintf(stderr, "z64 assert failed (%s : %d) : %s\n", file, line, s);
     fflush(stdout);
     fflush(stderr);
+    *(unsigned int *)0 = 0xdeadbeef; // hopefully will generate a segfault
     exit(-1);
   }
 }

@@ -78,7 +78,7 @@ int rglReadSettings()
           break;
         }
       LOG("section '%s'\n", section);
-      ignore = strcmp(section, rom) && strcmp(section, "default");
+      ignore = strcmp(section, rom) && strcmp(section, "override");
     } else if (ignore)
       continue;
     
@@ -102,6 +102,10 @@ int rglReadSettings()
         rglSettings.threaded = value;
       else if (!strcmp(key, "async"))
         rglSettings.async = value;
+      else if (!strcmp(key, "no_npot_fbos"))
+        rglSettings.noNpotFbos = value;
+      else if (!strcmp(key, "lowres"))
+        rglSettings.lowres = value;
       else
         LOGERROR("Unknown config key '%s'\n", key);
     }

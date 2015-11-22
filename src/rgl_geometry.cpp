@@ -31,34 +31,44 @@ void rglTextureRectangle(rdpTexRect_t * rect, int flip)
   int s, t;
   int dx, dy;
 
-#define tile rdpTiles[tilenum]
-  
-	x1 = (rect->xh / 4);
-	x2 = (rect->xl / 4);
-	y1 = (rect->yh / 4);
-	y2 = (rect->yl / 4);
+//   if (tilenum == 7) {
+//     LOG("Fixing tilenum from 7 to 0\n");
+//     tilenum = 0;
+//   }
+
+	x1 = (rect->xh);
+	x2 = (rect->xl);
+	y1 = (rect->yh);
+	y2 = (rect->yl);
   s = int(rect->s)<<5;
   t = int(rect->t)<<5;
 
-  DUMP("texrect %d x %d --> %d x %d s %d t %d flip %d mask %d x %d\n",
-       x1, y1, x2, y2, s, t, flip,
-       (1<<tile.mask_s+10)-1, (1<<tile.mask_t+10)-1);
+  DUMP("texrect %d x %d --> %d x %d s %d t %d flip %d\n",
+       x1, y1, x2, y2, s, t, flip);
 
 	if (RDP_GETOM_CYCLE_TYPE(rdpState.otherModes) == RDP_CYCLE_TYPE_FILL ||
       RDP_GETOM_CYCLE_TYPE(rdpState.otherModes) == RDP_CYCLE_TYPE_COPY)
 	{
 		rect->dsdx /= 4;
     //s /= 4;
+    x2 += 4;
+    y2 += 4;
+  } else {
     x2 += 1;
     y2 += 1;
   }
+
+  x1 /= 4;
+  x2 /= 4;
+  y1 /= 4;
+  y2 /= 4;
   
   int t1 = rglT1Usage(rdpState)? RGL_STRIP_TEX1:0;
   int t2 = (rect->tilenum < 7 && rglT2Usage(rdpState))? RGL_STRIP_TEX2:0;
   if (t1)
-    rglPrepareRendering(1, rect->tilenum, y2-y1, 1);
+    rglPrepareRendering(1, tilenum==7? 0:tilenum, y2-y1, 1);
   if (t2)
-    rglPrepareRendering(1, rect->tilenum+1, y2-y1, 1);
+    rglPrepareRendering(1, tilenum+1, y2-y1, 1);
   else if (!t1)
     rglPrepareRendering(0, 0, 0, 1);
 
@@ -145,7 +155,6 @@ void rglTextureRectangle(rdpTexRect_t * rect, int flip)
   
   strip->nbVtxs = vtx - strip->vtxs;
   nbVtxs = vtx - vtxs;
-#undef tile
 }
 
 void rglFillRectangle(rdpRect_t * rect)
@@ -213,6 +222,10 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
                  uint32_t * rdp_cmd)
 {
 	int tilenum = (w1 >> 16) & 0x7;
+//   if (tilenum == 7) {
+//     LOG("Fixing tilenum from 7 to 0\n");
+//     tilenum = 0;
+//   }
 	int j;
 	int xleft, xright, xleft_inc, xright_inc;
 	int xstart, xend;
@@ -235,11 +248,11 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
   int t1 = (texture && rglT1Usage(rdpState))? RGL_STRIP_TEX1:0;
   int t2 = (texture && tilenum < 7 && rglT2Usage(rdpState))? RGL_STRIP_TEX2:0;
   if (t1)
-    rglPrepareRendering(1, tilenum, 0, zbuffer);
+    rglPrepareRendering(1, tilenum==7? 0:tilenum, 0, zbuffer);
   if (t2)
     rglPrepareRendering(1, tilenum+1, 0, zbuffer);
   else if (!t1)
-    rglPrepareRendering(0, tilenum, 0, zbuffer);
+    rglPrepareRendering(0, tilenum==7? 0:tilenum, 0, zbuffer);
 
   curRBuffer->flags |= RGL_RB_HASTRIANGLES;
     
@@ -359,13 +372,13 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
   //rglAssert(j >= 0);
 #define XSCALE(x) (float(x)/(1<<18))
 #define YSCALE(y) (float(y)/(1<<2))
-#define ZSCALE(z) (RDP_GETOM_Z_SOURCE_SEL(rdpState.otherModes)? float(rdpState.primitiveZ)/0xffff : float(uint32_t(z))/0xffff0000)
+#define ZSCALE(z) (RDP_GETOM_Z_SOURCE_SEL(rdpState.otherModes)? float(uint32_t(rdpState.primitiveZ))/0xffff : float(uint32_t(z))/0xffff0000)
 #define WSCALE(z) (RDP_GETOM_PERSP_TEX_EN(rdpState.otherModes)? (float(uint32_t(z) + 0x10000)/0xffff0000) : 1.0f)
 #define CSCALE(c) (((c)>0x3ff0000? 0x3ff0000:((c)<0? 0 : (c)))>>18)
-#define _PERSP(w) ( RDP_GETOM_PERSP_TEX_EN(rdpState.otherModes)? (w) : 0x10000 )
-#define PERSP(s, w) ( RDP_GETOM_PERSP_TEX_EN(rdpState.otherModes)? (((int64_t)(s) << 20) / (_PERSP(w)? _PERSP(w):1)) : ((s)>>11) )
-#define SSCALE(s, _w) (float(PERSP(s, _w))/(1 << 10))
-#define TSCALE(s, w) (float(PERSP(s, w))/(1 << 10))
+#define _PERSP(w) ( w )
+#define PERSP(s, w) ( ((int64_t)(s) << 20) / (_PERSP(w)? _PERSP(w):1) )
+#define SSCALE(s, _w) (RDP_GETOM_PERSP_TEX_EN(rdpState.otherModes)? float(PERSP(s, _w))/(1 << 10) : float(s)/(1<<21))
+#define TSCALE(s, w) (RDP_GETOM_PERSP_TEX_EN(rdpState.otherModes)? float(PERSP(s, w))/(1 << 10) : float(s)/(1<<21))
 
   rglStrip_t * strip = strips + nbStrips++;
   rglAssert(nbStrips < MAX_STRIPS);

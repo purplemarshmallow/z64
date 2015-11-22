@@ -161,7 +161,7 @@ static FTFont * smallfont;
 static FTFont * curfont;
 
 static int fbindex;
-static int chunkindex;
+static int chunkindex, stripindex;
 static int mx, my;
 static float scalex, scaley;
 static rglShader_t * alphaShader;
@@ -283,11 +283,14 @@ void rglDisplayChunkInfo(rglRenderChunk_t & chunk)
     int oldx = x;
     if (!(chunk.flags & (1<<i))) continue;
     rglTile_t & tile = chunk.tiles[i];
-    gglPrintf(x, y-tile.h-FS, "#%d %dx%d", i, tile.w, tile.h);
-    gglPrintf(x, y-tile.h-2*FS, "fmt %s-%d %d %d", rdpImageFormats[tile.format], tile.size, tile.line, tile.hiresBuffer? tile.hiresBuffer-rBuffers : -1);
-    gglPrintf(x, y-tile.h-3*FS, "clip %dx%d %dx%d", tile.sl, tile.tl, tile.sh, tile.th);
-    gglPrintf(x, y-tile.h-4*FS, "mask %dx%d shift %dx%d", tile.mask_s, tile.mask_t, tile.shift_s, tile.shift_t);
-    gglPrintf(x, y-tile.h-5*FS, "%d %d %d %d pal %d", tile.cs, tile.ms, tile.ct, tile.ms, tile.palette);
+    int w = tile.w, h = tile.h;
+    if (w > 64) w = 64;
+    if (h > 64) h = 64;
+    gglPrintf(x, y-h-FS, "#%d %dx%d %x", i, tile.w, tile.h, tile.hiresBuffer? 0 : tile.tex->crc);
+    gglPrintf(x, y-h-2*FS, "fmt %s-%d %d %d", rdpImageFormats[tile.format], tile.size, tile.line, tile.hiresBuffer? tile.hiresBuffer-rBuffers : -1);
+    gglPrintf(x, y-h-3*FS, "clip %dx%d %dx%d", tile.sl, tile.tl, tile.sh, tile.th);
+    gglPrintf(x, y-h-4*FS, "mask %dx%d shift %dx%d", tile.mask_s, tile.mask_t, tile.shift_s, tile.shift_t);
+    gglPrintf(x, y-h-5*FS, "%d %d %d %d pal %d", tile.cs, tile.ms, tile.ct, tile.ms, tile.palette);
     glEnable(GL_TEXTURE_2D);
     if (tile.hiresBuffer)
       glBindTexture(GL_TEXTURE_2D, tile.hiresBuffer->texid);
@@ -296,18 +299,18 @@ void rglDisplayChunkInfo(rglRenderChunk_t & chunk)
     for (j=0; j<2; j++) {
       glBegin(GL_TRIANGLE_STRIP);
       glTexCoord2f(0, 0); glVertex2f(x, y);
-      glTexCoord2f(0, 1); glVertex2f(x, y-tile.h);
-      glTexCoord2f(1, 0); glVertex2f(x+tile.w, y);
-      glTexCoord2f(1, 1); glVertex2f(x+tile.w, y-tile.h);
+      glTexCoord2f(0, 1); glVertex2f(x, y-h);
+      glTexCoord2f(1, 0); glVertex2f(x+w, y);
+      glTexCoord2f(1, 1); glVertex2f(x+w, y-h);
       glEnd();
       rglUseShader(alphaShader);
-      x += tile.w+2;
+      x += w+2;
     }
     rglUseShader(0);
 //     if ((tile.w+2)*2 < 256)
 //       x += 256 - (tile.w+2)*2;
     x = oldx;
-    y -= tile.h + 5*FS + 5;
+    y -= h + 5*FS + 5;
   }
 
   y = oldy;
@@ -409,7 +412,7 @@ void rglDisplayChunkInfo(rglRenderChunk_t & chunk)
 
   if (chunk.nbStrips) {
     y -= FS;
-    rglStrip_t & strip = chunk.strips[0];
+    rglStrip_t & strip = chunk.strips[chunkindex >= 0? stripindex:0];
 
     int i;
     for (i=0; i<strip.nbVtxs; i++) {
@@ -481,13 +484,19 @@ void rglDisplayFlat(rglRenderChunk_t & chunk)
   for (j=0; j<chunk.nbStrips; j++) {
     rglStrip_t & strip = chunk.strips[j];
     int k;
-    
+
+    if (chunkindex >= 0 && j == stripindex) {
+      glPushAttrib(GL_ALL_ATTRIB_BITS);
+      glColor4ub(255, 255, 128, 255);
+    }
     glBegin(GL_TRIANGLE_STRIP);
     for (k=0; k<strip.nbVtxs; k++) {
       glVertex2f((strip.vtxs[k].x/(buffer.width)),
                  1-(strip.vtxs[k].y/(buffer.height)));
     }
     glEnd();
+    if (chunkindex >= 0 && j == stripindex)
+      glPopAttrib();
   }
 
   glPopAttrib();
@@ -521,6 +530,7 @@ int rglFindStrip(rglRenderChunk_t & chunk, float mx, float my)
             goto next;
           last = dx1;
         }
+        stripindex = j;
         return j;
 next:;
       }

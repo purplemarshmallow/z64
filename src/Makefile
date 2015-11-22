@@ -79,7 +79,8 @@ else
 CC	= $(TOOL_PREFIX)gcc
 CXX	= $(TOOL_PREFIX)g++
 LD	= $(TOOL_PREFIX)g++
-CFLAGS	= -g -mno-cygwin -DGCC -O2 -ffast-math -funroll-loops -mmmx -msse -msse2 -fomit-frame-pointer $(FTGL_INCS)
+#CFLAGS	= -g -mno-cygwin -DGCC -O2 -ffast-math -funroll-loops -mmmx -msse -msse2 -fomit-frame-pointer $(FTGL_INCS)
+CFLAGS	= -g -mno-cygwin -DGCC -O2 -ffast-math -funroll-loops -fomit-frame-pointer $(FTGL_INCS)
 #CFLAGS	= -mno-cygwin -DGCC -O2 $(FTGL_INCS) -g
 #CFLAGS	+= -O0 -g
 LDFLAGS	= -mno-cygwin $(FTGL_LIBS) -lole32 -luuid -lcomctl32 -lwinspool -lws2_32 -lwsock32 -lopengl32 -lglu32 -lglut32 -mno-cygwin -mwindows -mconsole # -lmingw32  -lSDLmain -lSDL
@@ -223,3 +224,5 @@ rebuild: clean $(ALL)
 rsp_gen.$(O): rsp.h
 rsp.$(O): rsp.h
 tester.$(O): rsp.h
+rgl.$(O): rgl.h
+rgl_tiles.$(O) : rgl.h

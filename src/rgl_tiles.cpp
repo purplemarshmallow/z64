@@ -135,6 +135,7 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
   //tile.format = ti_format;
 
   if (tile.size == 3) line <<= 1; // why why WHY ?
+  //if (tile.size == 0) clipw *= 2;
   tile.w = line << 1 >> tile.size;
   //if (tile.mask_s && (1<<tile.mask_s) < tile.w*2) // HACK
   if (tile.mask_s && (1<<tile.mask_s) < tile.w)
@@ -159,11 +160,6 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
 //   if (!tile.mask_t && !tile.ct/* && !tile.mt*/)
 //     tile.h = (0x1000-tile.tmem)/line;
 
-  if (tile.size <= 1 && tile.format == RDP_FORMAT_RGBA) {
-    //LOG("fixing RGBA tile to CI\n");
-    tile.format = RDP_FORMAT_CI;
-  }
-
 //   if (tile.sl && !tile.mask_s) {
 //     printf("shifting sl %d\n", tile.sl);
 //     tile.tmem += tile.sl << tile.format >> 1;
@@ -177,7 +173,10 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
 //     tile.tl = 0;
 //   }
 
-  if (tile.w*tile.h << tile.size >> 1 > 0x1000-tile.tmem) {
+  if (recth && tile.h == 1)
+    tile.h = recth;
+  
+  if (/*tile.h == 1 || */tile.w*tile.h << tile.size >> 1 > 0x1000-tile.tmem) {
     DUMP("fixing tile size from %dx%d to ", tile.w, tile.h);
     //tile.w = (line << 3) >> tile.size + 2;
     //tile.h = 1; while (tile.h<(tile.th>>2)) tile.h <<= 1;
@@ -185,7 +184,9 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
     DUMP("%dx%d\n", tile.w, tile.h);
   }
 
-  if (recth && /*tile.line == 8 && */tile.h == 1) {
+  // this is a warkaround for a bug in pj64 rsp plugin
+  // now fixed
+  if (0&&recth && /*tile.line == 8 && */tile.h == 1) {
     //LOG("direct\n");
     tile.w = rdpTiWidth << rdpTiSize >> tile.size;
     tile.h = recth;
@@ -205,6 +206,7 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
       if (!tile.mask_t)
         tile.h = (stop-tile.tmem)/line;
       rtile.hiresBuffer = 0;
+      //while (0) {
       CIRCLEQ_FOREACH(rglRenderBuffer_t, buffer, &rBufferHead, link) {
         //if (buffer->flags & RGL_RB_DEPTH) continue;
         if (buffer->area.xh != 8192)
@@ -382,12 +384,16 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
     //LOG("comparing %x with %x\n", tex->crc, crc);
     if (tex->crc == crc &&
         tex->fmt == tile.format &&
+        tex->clipw >= clipw &&
+        tex->cliph >= cliph &&
         tex->w == tile.w &&
         tex->h >= tile.h) {
       CIRCLEQ_REMOVE(&texturesByUsage, tex, byUsage);
       CIRCLEQ_INSERT_TAIL(rglTexture_t, &texturesByUsage, tex, byUsage);
       goto ok2;
     }
+//     if (tex->crc == crc)
+//       LOG("Same CRC %x !\n", crc);
   }
 #endif
 
@@ -395,6 +401,8 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
   tex->fmt = tile.format;
   tex->w = tile.w;
   tex->h = tile.h;
+  tex->clipw = clipw;
+  tex->cliph = cliph;
   tex->crc = crc;
   glGenTextures(1, &tex->id);
   rglAssert(glGetError() == GL_NO_ERROR);
@@ -462,8 +470,21 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
       break;
   }
   from = ptr;
+
+  i = tile.format;
+
+  if (tile.size <= 1 && i == RDP_FORMAT_RGBA) {
+    LOG("fixing RGBA tile to CI\n");
+    i = RDP_FORMAT_CI;
+  }
+
+  // in Tom Clancy, they do this, using I texture with TLUT enabled
+  if (i != RDP_FORMAT_CI && tile.size <= 1 && RDP_GETOM_EN_TLUT(rdpState.otherModes)) {
+    LOG("fixing %s-%d tile to CI\n", rdpImageFormats[i], tile.size);
+    i = RDP_FORMAT_CI;
+  }
   
-  switch (tile.format) {
+  switch (i) {
     case RDP_FORMAT_CI: {
       if (!RDP_GETOM_TLUT_TYPE(rdpState.otherModes)) {
         glfmt = GL_RGBA;

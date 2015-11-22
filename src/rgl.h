@@ -47,6 +47,8 @@ struct rglSettings_t {
   int forceSwap;
   int threaded;
   int async;
+  int noNpotFbos;
+  int lowres;
 };
 
 extern rglSettings_t rglSettings;
@@ -109,6 +111,7 @@ struct rglTexture_t {
   GLuint id, zid;
   uint32_t crc;
   int w, h, fmt;
+  int clipw, cliph;
   GLuint ws, wt, filter; // current settings
 };
 CIRCLEQ_HEAD(rglTextureHead_t, rglTexture_t);
@@ -200,6 +203,7 @@ extern rglShader_t * rglCopyDepthShader;
 #define RGL_COMB_IN0        4
 #define RGL_COMB_IN1_DEPTH  8
 #define RGL_COMB_IN1        8
+#define RGL_COMB_TILE7      16
 
 extern volatile int rglStatus, rglNextStatus;
 #define RGL_STATUS_CLOSED     0

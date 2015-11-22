@@ -533,14 +533,15 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 			uint16_t *tc = (uint16_t*)rdpTmem;
 			int tb = (rdpTiles[tilenum].tmem / 2);
 
+			if (tb + (line/2 * (height-1) + width) > 2048)
+			{
+				LOGERROR("rdp_load_tile 16-bit: tmem %04X, width %d, height %d = %d\n", rdpTiles[tilenum].tmem, width, height, width*height);
+        height = (2048 - tb) / (line/2);
+			}
+
       MarkTmemArea(tb*2, tb*2 + height*line,
                    rdpTiAddress + (tl * rdpTiWidth + sl)*2,
                    rdpTiWidth*2, rdpTiFormat, rdpTiSize);
-
-			if (tb + (line/2 * (height-1) + width) > 2048)
-			{
-				FATAL("rdp_load_tile 16-bit: tmem %04X, width %d, height %d = %d\n", rdpTiles[tilenum].tmem, width, height, width*height);
-			}
 
 			for (j=0; j < height; j++)
 			{

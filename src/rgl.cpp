@@ -25,6 +25,7 @@
  * - hires framebuffer : scale them accordingly to the GL screen resolution
  *
  * - multitexturing avec tilenum == 7, ca marche comment ?
+ *   --> tilenum=7 should be translated to tilenum=0 for triangle and texrec primitives
  *
  * - CvgXAlpha mode not really correct, effect probably depends on the texture format
  *   --> apparently fixed, Intensity textures shouldn't be affected by this effect
@@ -64,6 +65,9 @@
  *   --> depth clear problem, anything else ? FIXED
  * - texture problems in beetle
  *   --> mostly fixed, it was multitexturing, the sky still has a weird problem though
+ *   --> completely fixed at last (the sky uses tex2 in the second combiner cycle,
+ *       which should be interpreted as tex1 (apparently tex2 isn't available in the
+ *       second cycle)
  *
  */
 
@@ -77,7 +81,10 @@
 //#define NOFBO
 #define ZTEX
 #define FBORGBA
-//#define FBOP2
+
+rglTexCache_t rglTexCache[0x1000];
+uint8_t rglTmpTex[1024*1024*4];
+uint8_t rglTmpTex2[1024*1024*4];
 
 volatile int rglStatus, rglNextStatus;
 
@@ -102,10 +109,6 @@ rglRenderBufferHead_t rBufferHead;
 int rglTexCacheCounter = 1;
 
 rglTexture_t rglTextures[RGL_TEX_CACHE_SIZE];
-
-rglTexCache_t rglTexCache[0x1000];
-uint8_t rglTmpTex[1024*1024*4];
-uint8_t rglTmpTex2[1024*1024*4];
 
 rglRenderChunk_t chunks[MAX_RENDER_CHUNKS];
 rglRenderChunk_t * curChunk;
@@ -175,11 +178,6 @@ int rglScreenWidth = 320, rglScreenHeight = 240;
 void check()
 {
   // a place where to put some sanity checks
-  
-//   int i, j;
-//   for (i=0; i<nbRBuffers; i++)
-//     for (j=0; j<rglNbTextures; j++)
-//       rglAssert(rBuffers[i].texid != rglTextures[j].id);
 }
 
 rglDepthBuffer_t * rglFindDepthBuffer(uint32_t address, int width, int height)
@@ -264,16 +262,28 @@ void rglFullSync()
     old_vi_origin = ~0; 
 }
 
+// note : if "same" is 1 then both tiles use the same texture, in this
+//        case we can't safely modify the clamping mode
 void rglFixupMapping(rglStrip_t & strip, rglTile_t & tile,
                      float ds, float dt, float ss, float st,
-                     float & dsm, float & dtm)
+                     float & dsm, float & dtm, int same)
 {
+  float mins = strip.vtxs[0].s;
+  float mint = strip.vtxs[0].t;
+  int i;
+  if ( (tile.mask_s && !tile.cs) || (tile.mask_t && !tile.ct) )
+    for (i=1; i<strip.nbVtxs; i++) {
+      if (strip.vtxs[i].s < mins)
+        mins = strip.vtxs[i].s;
+      if (strip.vtxs[i].t < mint)
+        mint = strip.vtxs[i].t;
+    }
   if (tile.mask_s && !tile.cs)
-    dsm = -((int(strip.vtxs[1].s - tile.sl*float(1<<tile.shift_s+4)/64.0f) + (tile.ms<<tile.mask_s)) & ((~tile.ms)<<tile.mask_s+tile.shift_s+4>>4));
+    dsm = -((int(mins+0.5f - tile.sl*float(1<<tile.shift_s+4)/64.0f) + (tile.ms<<tile.mask_s)) & ((~tile.ms)<<tile.mask_s+tile.shift_s+4>>4));
   else
     dsm = 0;
   if (tile.mask_t && !tile.ct)
-    dtm = -((int(strip.vtxs[1].t - tile.tl*float(1<<tile.shift_t+4)/64.0f) + (tile.mt<<tile.mask_t)) & ((~tile.mt)<<tile.mask_t+tile.shift_t+4>>4));
+    dtm = -((int(mint+0.5f - tile.tl*float(1<<tile.shift_t+4)/64.0f) + (tile.mt<<tile.mask_t)) & ((~tile.mt)<<tile.mask_t+tile.shift_t+4>>4));
   else
     dtm = 0;
 
@@ -281,15 +291,14 @@ void rglFixupMapping(rglStrip_t & strip, rglTile_t & tile,
     return;
   else {
     GLuint wws = tile.ws, wwt = tile.wt;
-    int i;
 
-    if (wws != GL_REPEAT)
+    if (same || wws != GL_REPEAT)
       goto skips;
     for (i=0; i<strip.nbVtxs; i++) {
-      float f = strip.vtxs[i].w/ss;
       float a = (strip.vtxs[i].s + ds + dsm);
-      if ((a-0.5f)*f > 1 || (a+0.5f)*f < 0)
+      if ((a-0.5f)/ss > 1 || (a+0.5f)/ss < 0) {
         goto skips;
+      }
     }
     //LOG("fixing S clamp\n");
     wws = GL_CLAMP_TO_EDGE;
@@ -299,12 +308,11 @@ skips:
       tile.tex->ws = wws;
     }
 
-    if (wwt != GL_REPEAT)
+    if (same || wwt != GL_REPEAT)
       goto skipt;
     for (i=0; i<strip.nbVtxs; i++) {
-      float f = strip.vtxs[i].w/st;
       float a = (strip.vtxs[i].t + dt + dtm);
-      if ((a-0.5f)*f > 1 || (a+0.5f)*f < 0)
+      if ((a-0.5f)/st > 1 || (a+0.5f)/st < 0)
         goto skipt;
     }
     //LOG("fixing T clamp\n");
@@ -324,11 +332,12 @@ int rglUseTile(rglTile_t & tile, float & ds, float & dt, float & ss, float & st)
   dt = -tile.tl*float(1<<tile.shift_t+4)/64.0f;
   if (rglSettings.hiresFb && tile.hiresBuffer) {
     rglRenderBuffer_t & hbuf = *tile.hiresBuffer;
-    if (hbuf.flags & RGL_RB_DEPTH) {
-      glBindTexture(GL_TEXTURE_2D, hbuf.depthBuffer->zbid);
-      res = RGL_COMB_IN0_DEPTH;
-    } else
+//     if (hbuf.flags & RGL_RB_DEPTH) {
+//       glBindTexture(GL_TEXTURE_2D, hbuf.depthBuffer->zbid);
+//       res = RGL_COMB_IN0_DEPTH;
+//     } else
       glBindTexture(GL_TEXTURE_2D, hbuf.texid);
+    rglAssert(glGetError() == GL_NO_ERROR);
     ss = -(hbuf.width<<tile.shift_s+4>>4);
     st = -(hbuf.height<<tile.shift_t+4>>4);
     ds = -ds - (((int32_t(tile.hiresAddress) - int32_t(hbuf.addressStart)) % hbuf.line) >> hbuf.size << 1);
@@ -343,11 +352,13 @@ int rglUseTile(rglTile_t & tile, float & ds, float & dt, float & ss, float & st)
          tile.sl, tile.tl);
   } else {
     glBindTexture(GL_TEXTURE_2D, tile.tex->id);
+    rglAssert(glGetError() == GL_NO_ERROR);
     ss = tile.w<<tile.shift_s+4>>4; st = tile.h<<tile.shift_t+4>>4;
 
     if (tile.tex->filter != tile.filter) {
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tile.filter);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tile.filter);
+      rglAssert(glGetError() == GL_NO_ERROR);
       tile.tex->filter = tile.filter;
     }      
   }
@@ -365,6 +376,7 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
   float d2 = -1;
   float d = 0;
   float restoreW = buffer.width+d2, restoreH = buffer.height+d2;
+  int w, h;
   restoreW *= float(buffer.fboWidth+d) / (buffer.realWidth+d);
   restoreH *= float(buffer.fboHeight+d) / (buffer.realHeight+d);
   
@@ -383,37 +395,41 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
   
   buffer.addressStop = buffer.addressStart + buffer.line * ((buffer.area.yl >>2)+1);
 
-  if (buffer.width <= 128 || buffer.height <= 128) {
-    buffer.realWidth = buffer.width*4;
-    buffer.realHeight = buffer.height*4;
-    buffer.flags &= ~RGL_RB_FULL;
+  if (rglSettings.lowres) {
+    buffer.realWidth = buffer.width;
+    buffer.realHeight = buffer.height;
   } else {
-    buffer.realWidth = screen_width * buffer.width / rglScreenWidth;
-    buffer.realHeight = screen_height * buffer.height / rglScreenHeight;
+    if (buffer.width <= 128 || buffer.height <= 128) {
+      buffer.realWidth = buffer.width*4;
+      buffer.realHeight = buffer.height*4;
+      buffer.flags &= ~RGL_RB_FULL;
+    } else {
+      buffer.realWidth = screen_width * buffer.width / rglScreenWidth;
+      buffer.realHeight = screen_height * buffer.height / rglScreenHeight;
 //     buffer.realWidth = screen_width * buffer.width / vi_width;
 //     if (buffer.height > 250)
 //       buffer.realHeight = screen_height * buffer.height / 480;
 //     else
 //       buffer.realHeight = screen_height * buffer.height / 240;
-    buffer.flags |= RGL_RB_FULL;
+      buffer.flags |= RGL_RB_FULL;
+    }
   }
 
-#ifdef FBOP2
-  {
-    int w = 1, h = 1;
+  if (rglSettings.noNpotFbos) {
+    w = 1; h = 1;
     while (w < buffer.realWidth) w <<= 1;
     while (h < buffer.realHeight) h <<= 1;
-    buffer.realWidth = w;
-    buffer.realHeight = h;
+  } else {
+    w = buffer.realWidth;
+    h = buffer.realHeight;
   }
-#endif
   
 #ifndef NOFBO
-  if (buffer.fboWidth == buffer.realWidth && buffer.fboHeight == buffer.realHeight)
+  if (buffer.fboWidth == w && buffer.fboHeight == h)
     buffer.redimensionStamp = rglFrameCounter;
   
   if (buffer.fbid &&
-      (buffer.fboWidth < buffer.realWidth || buffer.fboHeight < buffer.realHeight ||
+      (//buffer.fboWidth < w || buffer.fboHeight < h ||
        (rglFrameCounter - buffer.redimensionStamp > 4))) {
     LOG("Redimensionning buffer\n");
     restoreId = buffer.texid;
@@ -440,10 +456,10 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
 #endif
     }
 
-    LOG("creating fbo %x %dx%d (%dx%d) fmt %x\n", buffer.addressStart, buffer.width, buffer.height, buffer.realWidth, buffer.realHeight, buffer.format);
+    LOG("creating fbo %x %dx%d (%dx%d) fmt %x\n", buffer.addressStart, buffer.width, buffer.height, w, h, buffer.format);
 
-    buffer.fboWidth = buffer.realWidth;
-    buffer.fboHeight = buffer.realHeight;
+    buffer.fboWidth = w;
+    buffer.fboHeight = h;
     
 #ifdef RGL_EXACT_BLEND
     glGenFramebuffersEXT(1, &buffer.fbid2);
@@ -456,7 +472,7 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
       rglAssert(glGetError() == GL_NO_ERROR);
       glBindTexture(GL_TEXTURE_2D, buffer.texid2);
       rglAssert(glGetError() == GL_NO_ERROR);
-      glTexImage2D(GL_TEXTURE_2D, 0, glfmt, buffer.realWidth, buffer.realHeight, 0,
+      glTexImage2D(GL_TEXTURE_2D, 0, glfmt, w, h, 0,
                    glfmt, GL_UNSIGNED_BYTE, NULL);
       rglAssert(glGetError() == GL_NO_ERROR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -487,7 +503,7 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
       rglAssert(glGetError() == GL_NO_ERROR);
       glBindTexture(GL_TEXTURE_2D, buffer.texid);
       rglAssert(glGetError() == GL_NO_ERROR);
-      glTexImage2D(GL_TEXTURE_2D, 0, glfmt, buffer.realWidth, buffer.realHeight, 0,
+      glTexImage2D(GL_TEXTURE_2D, 0, glfmt, w, h, 0,
                    glfmt, GL_UNSIGNED_BYTE, NULL);
       rglAssert(glGetError() == GL_NO_ERROR);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -650,11 +666,16 @@ void rglRenderChunks(int upto)
   
       glViewport(0, 0, buffer.realWidth, buffer.realHeight);
     }
-    
+
+    if (chunk.rdpState.clip.yl < chunk.rdpState.clip.yh ||
+        chunk.rdpState.clip.xl < chunk.rdpState.clip.xh)
+      continue;
+        
     glScissor((chunk.rdpState.clip.xh >>2)*buffer.realWidth/buffer.width,
               (chunk.rdpState.clip.yh >>2)*buffer.realHeight/buffer.height,
               (chunk.rdpState.clip.xl-chunk.rdpState.clip.xh >>2)*buffer.realWidth/buffer.width,
               (chunk.rdpState.clip.yl-chunk.rdpState.clip.yh >>2)*buffer.realHeight/buffer.height);
+    rglAssert(glGetError() == GL_NO_ERROR);
 
 #ifndef NOFBO
 #ifdef RGL_EXACT_BLEND
@@ -697,6 +718,7 @@ void rglRenderChunks(int upto)
     } else {
       rglRenderMode(chunk);
     }
+    rglAssert(glGetError() == GL_NO_ERROR);
 
     if (RDP_GETOM_Z_MODE(chunk.rdpState.otherModes) & 1) {
       switch(RDP_GETOM_Z_MODE(chunk.rdpState.otherModes)) {
@@ -731,12 +753,17 @@ void rglRenderChunks(int upto)
     for (j=0; j<chunk.nbStrips; j++) {
       rglStrip_t & strip = chunk.strips[j];
       int k;
+      int tilenum = strip.tilenum;
+      if (tilenum == 7) {
+        tilenum = 0;
+        combFormat |= RGL_COMB_TILE7;        
+      }
 
-      rglTile_t & tile = chunk.tiles[strip.tilenum];
-      rglTile_t & tile2 = chunk.tiles[strip.tilenum+1];
+      rglTile_t & tile = chunk.tiles[tilenum];
+      rglTile_t & tile2 = chunk.tiles[tilenum+1];
 
-      if (strip.flags != oldFlags || strip.tilenum != oldTilenum) {
-        oldTilenum = strip.tilenum;
+      if (strip.flags != oldFlags || tilenum != oldTilenum) {
+        oldTilenum = tilenum;
         if (strip.flags & RGL_STRIP_TEX1) {
           //if (tile.hiresBuffer) continue;
           combFormat |= rglUseTile(tile, ds[0], dt[0], ss[0], st[0]);
@@ -755,8 +782,7 @@ void rglRenderChunks(int upto)
       }
 
       if (j == 0)
-        rglSetCombiner(chunk,
-                       combFormat);
+        rglSetCombiner(chunk, combFormat);
       
       if (strip.flags != oldFlags) {
         oldFlags = strip.flags;
@@ -793,11 +819,13 @@ void rglRenderChunks(int upto)
 
       if (strip.flags & RGL_STRIP_TEX1)
         rglFixupMapping(strip, tile,
-                        ds[0], dt[0], ss[0], st[0], dsm[0], dtm[0]);
+                        ds[0], dt[0], ss[0], st[0], dsm[0], dtm[0],
+                        (strip.flags & RGL_STRIP_TEX2) && tile.tex == tile2.tex);
       if (strip.flags & RGL_STRIP_TEX2) {
         glActiveTextureARB(GL_TEXTURE2_ARB);
         rglFixupMapping(strip, tile2,
-                        ds[1], dt[1], ss[1], st[1], dsm[1], dtm[1]);
+                        ds[1], dt[1], ss[1], st[1], dsm[1], dtm[1],
+                        (strip.flags & RGL_STRIP_TEX1) && tile.tex == tile2.tex);
         glActiveTextureARB(GL_TEXTURE0_ARB);
       }
       
@@ -978,7 +1006,7 @@ void rglDisplayFramebuffers()
     vi_line /= 2;
   
   DUMP("%x screen %x --> %x %d --> %d x %d --> %d scale %g x %g clip %g --> %g x %g --> %g %dx%d\n",
-      vi_line,
+       vi_line,
        vi_start, vi_stop,
        hstart, hend, vstart, vend,
        fscale_x, fscale_y,
@@ -1073,11 +1101,10 @@ void rglUpdate()
   
   rglDisplayFramebuffers();
 
-  rglUseShader(0);
-  
 #ifndef NOFBO
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 #endif
+  rglUseShader(0);
   glDrawBuffer(GL_BACK);
   rglSwapBuffers();
   
@@ -1096,6 +1123,12 @@ void rglUpdate()
 #ifdef WIN32
   if (GetAsyncKeyState ('P') & 0x0001) {
     rglDebugger();
+  }
+  if (GetAsyncKeyState ('D') & 0x0001) {
+    rdp_dump = 2;
+  }
+  if (GetAsyncKeyState ('W') & 0x0001) {
+    wireframe = !wireframe;
   }
 #else
   SDL_Event event;
@@ -1216,9 +1249,13 @@ void rglPrepareRendering(int texturing, int tilenum, int recth, int depth)
       (rdpChanged & (RDP_BITS_ZB_SETTINGS | RDP_BITS_FB_SETTINGS)) ||
       curZBuffer->addressStart != rdpZbAddress) {
     // first search the most recent without considering the width of the buffer
-    CIRCLEQ_FOREACH(rglRenderBuffer_t, curZBuffer, &rBufferHead, link)
-      if (curZBuffer->addressStart == rdpZbAddress)
+    rglRenderBuffer_t * buf;
+    curZBuffer = 0;
+    CIRCLEQ_FOREACH(rglRenderBuffer_t, buf, &rBufferHead, link)
+      if (buf->addressStart == rdpZbAddress) {
+        curZBuffer = buf;
         break;
+      }
     if (!curZBuffer) {
       curZBuffer = rglSelectRenderBuffer(rdpZbAddress, rdpFbWidth, 2, RDP_FORMAT_RGBA);
       CIRCLEQ_REMOVE(&rBufferHead, curZBuffer, link);
@@ -1235,7 +1272,8 @@ void rglPrepareRendering(int texturing, int tilenum, int recth, int depth)
   if (rdpChanged & (RDP_BITS_TMEM | RDP_BITS_TLUT | RDP_BITS_TILE_SETTINGS))
     rglTouchTMEM();
 
-  if (rdpChanged & (RDP_BITS_CLIP | RDP_BITS_ZB_SETTINGS | RDP_BITS_FB_SETTINGS))
+  if (rdpChanged & (RDP_BITS_CLIP | RDP_BITS_ZB_SETTINGS | RDP_BITS_FB_SETTINGS) &&
+      rdpState.clip.xh <= rdpState.clip.xl && rdpState.clip.yh <= rdpState.clip.yl)
   {
     if (curRBuffer->area.xh == 8192)
       curRBuffer->flags &= ~RGL_RB_HASTRIANGLES;
