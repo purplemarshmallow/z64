@@ -1,13 +1,13 @@
 #include "Gfx #1.3.h"
 #include "z64.h"
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 SDL_Surface *sdl_Screen;
 
 int screen_width = 640, screen_height = 480;
 
-void rdp_init();
+int rdp_init();
 
 extern GFX_INFO gfx;
 
