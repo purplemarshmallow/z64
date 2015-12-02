@@ -1093,6 +1093,17 @@ void rglUpdate()
   DUMP("updating vi_origin %x vi_hstart %d vi_vstart %d\n",
          vi_origin, *gfx.VI_H_START_REG, *gfx.VI_V_START_REG);
 
+  for (i = nbRBuffers - 1; i >= 0; i--) {
+    int start = rBuffers[i].addressStart >> 2;
+	for (int j = 0; j < 4; ++j) {
+	  if ((rdram[start++] & 0xFFFEFFFE) != (fingerprint[j] & 0xFFFEFFFE)) {
+	    rglClose();
+	    rglInit();
+	    break;
+	  }
+	}
+  }
+
   glPolygonMode(GL_FRONT_AND_BACK, wireframe? GL_LINE : GL_FILL);
 
   rglRenderChunks(nbChunks);
@@ -1228,6 +1239,12 @@ rglRenderBuffer_t * rglSelectRenderBuffer(uint32_t addr, int width, int size, in
   cur->line = (width << size >> 1);
   cur->flags = 0;
   CIRCLEQ_INSERT_HEAD(rglRenderBuffer_t, &rBufferHead, cur, link);
+
+  int start = addr >> 2;
+  for (int i = 0; i < 4; ++i) {
+    rdram[start++] = fingerprint[i];
+  }
+
   return cur;
 }
 
