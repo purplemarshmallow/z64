@@ -277,11 +277,11 @@ void rglFixupMapping(rglStrip_t & strip, rglTile_t & tile,
         mint = strip.vtxs[i].t;
     }
   if (tile.mask_s && !tile.cs)
-    dsm = -((int(mins+0.5f - tile.sl*float(1<<tile.shift_s+4)/64.0f) + (tile.ms<<tile.mask_s)) & ((~tile.ms)<<tile.mask_s+tile.shift_s+4>>4));
+    dsm = -((int(mins+0.5f - tile.sl*float(1<<(tile.shift_s+4))/64.0f) + (tile.ms<<tile.mask_s)) & ((~tile.ms)<<(tile.mask_s+tile.shift_s+4)>>4));
   else
     dsm = 0;
   if (tile.mask_t && !tile.ct)
-    dtm = -((int(mint+0.5f - tile.tl*float(1<<tile.shift_t+4)/64.0f) + (tile.mt<<tile.mask_t)) & ((~tile.mt)<<tile.mask_t+tile.shift_t+4>>4));
+    dtm = -((int(mint+0.5f - tile.tl*float(1<<(tile.shift_t+4))/64.0f) + (tile.mt<<tile.mask_t)) & ((~tile.mt)<<(tile.mask_t+tile.shift_t+4)>>4));
   else
     dtm = 0;
 
@@ -326,8 +326,8 @@ skipt:
 int rglUseTile(rglTile_t & tile, float & ds, float & dt, float & ss, float & st)
 {
   int res = 0;
-  ds = -tile.sl*float(1<<tile.shift_s+4)/64.0f;
-  dt = -tile.tl*float(1<<tile.shift_t+4)/64.0f;
+  ds = -tile.sl*float(1<<(tile.shift_s+4))/64.0f;
+  dt = -tile.tl*float(1<<(tile.shift_t+4))/64.0f;
   if (rglSettings.hiresFb && tile.hiresBuffer) {
     rglRenderBuffer_t & hbuf = *tile.hiresBuffer;
 //     if (hbuf.flags & RGL_RB_DEPTH) {
@@ -336,8 +336,8 @@ int rglUseTile(rglTile_t & tile, float & ds, float & dt, float & ss, float & st)
 //     } else
       glBindTexture(GL_TEXTURE_2D, hbuf.texid);
     rglAssert(glGetError() == GL_NO_ERROR);
-    ss = -(hbuf.width<<tile.shift_s+4>>4);
-    st = -(hbuf.height<<tile.shift_t+4>>4);
+    ss = -(hbuf.width<<(tile.shift_s+4)>>4);
+    st = -(hbuf.height<<(tile.shift_t+4)>>4);
     ds = -ds - (((int32_t(tile.hiresAddress) - int32_t(hbuf.addressStart)) % hbuf.line) >> hbuf.size << 1);
     dt = -dt - (int32_t(tile.hiresAddress) - int32_t(hbuf.addressStart)) / hbuf.line;
     ss /= float(hbuf.realWidth)/hbuf.fboWidth;
@@ -351,7 +351,7 @@ int rglUseTile(rglTile_t & tile, float & ds, float & dt, float & ss, float & st)
   } else {
     glBindTexture(GL_TEXTURE_2D, tile.tex->id);
     rglAssert(glGetError() == GL_NO_ERROR);
-    ss = tile.w<<tile.shift_s+4>>4; st = tile.h<<tile.shift_t+4>>4;
+    ss = tile.w<<(tile.shift_s+4)>>4; st = tile.h<<(tile.shift_t+4)>>4;
 
     if (tile.tex->filter != tile.filter) {
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tile.filter);
@@ -365,7 +365,7 @@ int rglUseTile(rglTile_t & tile, float & ds, float & dt, float & ss, float & st)
 
 void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
 {
-  int olderased = buffer.flags & RGL_RB_ERASED;
+  //int olderased = buffer.flags & RGL_RB_ERASED;
 
   if (buffer.area.xh == 8192)
     return;
@@ -671,8 +671,8 @@ void rglRenderChunks(int upto)
         
     glScissor((chunk.rdpState.clip.xh >>2)*buffer.realWidth/buffer.width,
               (chunk.rdpState.clip.yh >>2)*buffer.realHeight/buffer.height,
-              (chunk.rdpState.clip.xl-chunk.rdpState.clip.xh >>2)*buffer.realWidth/buffer.width,
-              (chunk.rdpState.clip.yl-chunk.rdpState.clip.yh >>2)*buffer.realHeight/buffer.height);
+              ((chunk.rdpState.clip.xl-chunk.rdpState.clip.xh) >>2)*buffer.realWidth/buffer.width,
+              ((chunk.rdpState.clip.yl-chunk.rdpState.clip.yh) >>2)*buffer.realHeight/buffer.height);
     rglAssert(glGetError() == GL_NO_ERROR);
 
 #ifndef NOFBO
@@ -796,11 +796,12 @@ void rglRenderChunks(int upto)
                     RDP_GETC16_B(chunk.rdpState.fillColor)/31.0f,
                     RDP_GETC16_A(chunk.rdpState.fillColor));
 
-        if (wireframe)
-          if (!(strip.flags & (RGL_STRIP_SHADE | RGL_STRIP_TEX1 | RGL_STRIP_TEX2)))
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-          else
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		if (wireframe) {
+			if (!(strip.flags & (RGL_STRIP_SHADE | RGL_STRIP_TEX1 | RGL_STRIP_TEX2)))
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			else
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
       }
 
       // FIXME
@@ -932,7 +933,7 @@ void rglRenderChunks(int upto)
 
 void rglDisplayFramebuffers()
 {
-  int i;
+  //int i;
 
   if (!(vi_control & 3))
     return;
@@ -1032,8 +1033,8 @@ void rglDisplayFramebuffers()
   rglRenderBuffer_t * buffer;
   CIRCLEQ_FOREACH(rglRenderBuffer_t, buffer, &rBufferHead, link)
     if (!(buffer->flags & RGL_RB_ERASED) &&
-        vi_stop > buffer->addressStart &&
-        vi_start < buffer->addressStop) {
+		(uint32_t)vi_stop > buffer->addressStart &&
+		(uint32_t)vi_start < buffer->addressStop) {
       
       if (buffer->size != 2 || buffer->format != RDP_FORMAT_RGBA)
         continue; // FIXME
@@ -1420,7 +1421,6 @@ int rglInit()
   );
 
   rdpChanged = ~0;
-
   return 1;
 }
 
@@ -1512,7 +1512,7 @@ static void build_exptable()
   for (i=0; i<256; i++) {
     int s;
     for (s=0; s<7; s++)
-      if (!(i&(1<<6-s)))
+      if (!(i&(1<<(6-s))))
         break;
     exptable[i] = s;
   }
@@ -1617,11 +1617,11 @@ void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t s
       for (y=ry; y<ry+rh; y++) {
         uint32_t a = *(float *)&fb[(x-rx)*4 + (y-ry)*rw*4] * ((1<<18)-1);
         //uint32_t a = uint32_t(*(uint16_t *)&fb[(x-rx)*4 + (y-ry)*rw*4]) << 2;
-        int e = exptable[a>>18-8];
+        int e = exptable[a>>(18-8)];
 
-        a = ( ( (e>=6? a : (a>>6-e)) & ((1<<11)-1) ) << 2 ) | (e<<16-3);
+        a = ( ( (e>=6? a : (a>>(6-e))) & ((1<<11)-1) ) << 2 ) | (e<<(16-3));
         
-        *(uint16_t *)&ram[x*2 + y*buffer.line ^ 2] =
+        *(uint16_t *)&ram[(x*2 + y*buffer.line) ^ 2] =
           a;
           //int(*(uint16_t *)&fb[(x-rx)*2 + (y-ry)*rw*2])-2;
         //(*(uint16_t *)&fb[(x-rx)*2 + (y-ry)*rw*2] - int(0x8000))*2;
@@ -1636,7 +1636,7 @@ void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t s
 //             int g = fb[(x-rx + (y-ry)*rw)*4 + 1];
 //             int b = fb[(x-rx + (y-ry)*rw)*4 + 2];
 //             int a = fb[(x-rx + (y-ry)*rw)*4 + 3];
-            *(uint8_t *)&ram[x + y*buffer.line ^ 3] =
+            *(uint8_t *)&ram[(x + y*buffer.line) ^ 3] =
               r;
             //(r+g+b)/3; // FIXME just R ?
           }
@@ -1648,7 +1648,7 @@ void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t s
             int g = fb[(x-rx + (y-ry)*rw)*4 + 1];
             int b = fb[(x-rx + (y-ry)*rw)*4 + 2];
             int a = fb[(x-rx + (y-ry)*rw)*4 + 3];
-            *(uint16_t *)&ram[x*2 + y*buffer.line ^ 2] =
+            *(uint16_t *)&ram[(x*2 + y*buffer.line) ^ 2] =
               ((r&0xf8)<<8) | ((g&0xf8)<<3) | ((b&0xf8)>>2) |
               ((a&0x80)>>7);
           }

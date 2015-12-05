@@ -90,7 +90,7 @@ void rglInitTextureCache()
 
 void rglResetTextureCache()
 {
-  int i;
+  //int i;
 
   static int init;
   if (!init) {
@@ -111,9 +111,9 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
   rglTexture_t * tex;
   int ws, wt;
   int line = tile.line;
-  int cs, ct;
-  int clipw = (tile.sh - tile.sl >>2)+1;
-  int cliph = (tile.th - tile.tl >>2)+1;
+  //int cs, ct;
+  int clipw = ((tile.sh - tile.sl) >>2)+1;
+  int cliph = ((tile.th - tile.tl) >>2)+1;
   int indirect = 1;
   uint8_t * from = rdpTmem;
   int ow, oh;
@@ -141,7 +141,7 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
   if (tile.cs && ((clipw+3)&~3) < tile.w) // GL wants width divisible by 4 at least ?
     tile.w = ((clipw+3)&~3);
 
-  tile.h = (tile.th - tile.tl >>2)+1; // FIXME why not cliph ???
+  tile.h = ((tile.th - tile.tl) >>2)+1; // FIXME why not cliph ???
   //tile.h = (tile.th >>2)+1;
 //   if (tile.h <= 0)
 //     tile.h = (tile.th >>2)+1;
@@ -199,7 +199,7 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
     int fromLine, stop, fromFormat, fromSize;
     uint32_t address = rdpGetTmemOrigin(tile.tmem, &fromLine, &stop, &fromFormat, &fromSize);
     DUMP("tmem %x rdram %x\n", tile.tmem, address);
-    if (address != ~0) {
+	if (address != (uint32_t)~0) {
       rglRenderBuffer_t * buffer;
       if (!fromLine) fromLine = line;
       if (!tile.mask_t)
@@ -370,13 +370,13 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
     h = tile.size? 256:16;
     if (tile.size == 0) palette = (tile.palette<<4)&0xff;
     for (i=0; i<h; i++)
-      crc = ((crc>>3)|(crc<<32-3))+(rdpTlut[(i+palette)*4]);
+      crc = ((crc>>3)|(crc<<(32-3)))+(rdpTlut[(i+palette)*4]);
   }
 
   for (y=0; y<oh; y++) {
     uint32_t * p = (uint32_t *) &from[(tile.tmem + y*line)/*&0x3fff*/];
     for (x=0; x<(line>>2); x++)
-      crc = ((crc>>3)|(crc<<32-3))+(*p++);
+      crc = ((crc>>3)|(crc<<(32-3)))+(*p++);
   }
 
   list = texturesByCrc + crc8(crc);
@@ -455,7 +455,7 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
       for (j=0; j<oh; j++)
         for (i=0; i<ow; i++) {
           CLAMP;
-          uint8_t a = *(uint8_t *)&from[(cj*line + ci + tile.tmem ^ ((cj & indirect)<<2) ^ XOR_SWAP_BYTE)/*&0xfff*/];
+          uint8_t a = *(uint8_t *)&from[((cj*line + ci + tile.tmem) ^ ((cj & indirect)<<2) ^ XOR_SWAP_BYTE)/*&0xfff*/];
           *(uint8_t *)&ptr[(tile.h-1-j)*tile.w + (tile.w-1-i)] = a;
         }
       break;
@@ -464,7 +464,7 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
       for (j=0; j<tile.h; j++)
         for (i=0; i<tile.w; i+=2) {
           CLAMP;
-          uint8_t a = *(uint8_t *)&from[(cj*line + ci/2 + tile.tmem ^ ((cj & indirect)<<2) ^ XOR_SWAP_BYTE)/*&0x3fff*/];
+          uint8_t a = *(uint8_t *)&from[((cj*line + ci/2 + tile.tmem) ^ ((cj & indirect)<<2) ^ XOR_SWAP_BYTE)/*&0x3fff*/];
           *(uint8_t *)&ptr[(tile.h-1-j)*tile.w/2 + (tile.w/2-1-i/2)] = a; //(a>>4)|(a<<4);
         }
       break;
