@@ -306,9 +306,9 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   c->dstBlend = GL_ZERO;
 #endif
   const char * write;
-  if (format & RGL_COMB_FMT == RGL_COMB_FMT_DEPTH)
+  if ((format & RGL_COMB_FMT) == RGL_COMB_FMT_DEPTH)
     write = "gl_FragDepth = c[0];";
-  else if (format & RGL_COMB_FMT == RGL_COMB_FMT_I)
+  else if ((format & RGL_COMB_FMT) == RGL_COMB_FMT_I)
     write = "gl_FragColor = vec4(c[0]);";
   else //RGL_COMB_FMT_RGBA
     write = "gl_FragColor = c;";
