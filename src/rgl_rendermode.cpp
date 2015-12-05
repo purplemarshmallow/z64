@@ -224,7 +224,6 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   char * p;
   const char * alphaTest;
   const char * alphaTest2;
-  static char * write;
   static char src[4*4096];
 
   float env[4];
@@ -306,18 +305,13 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   c->srcBlend = GL_ONE;
   c->dstBlend = GL_ZERO;
 #endif
-
-  switch (format & RGL_COMB_FMT) {
-    case RGL_COMB_FMT_RGBA:
-      write = "gl_FragColor = c;";
-      break;
-    case RGL_COMB_FMT_I:
-      write = "gl_FragColor = vec4(c[0]);";
-      break;
-    case RGL_COMB_FMT_DEPTH:
-      write = "gl_FragDepth = c[0];";
-      break;
-  }
+  const char * write;
+  if (format & RGL_COMB_FMT == RGL_COMB_FMT_DEPTH)
+    write = "gl_FragDepth = c[0];";
+  else if (format & RGL_COMB_FMT == RGL_COMB_FMT_I)
+    write = "gl_FragColor = vec4(c[0]);";
+  else //RGL_COMB_FMT_RGBA
+    write = "gl_FragColor = c;";
 
   if (cycle == RDP_CYCLE_TYPE_FILL) {
     sprintf(
