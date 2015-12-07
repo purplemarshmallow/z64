@@ -94,8 +94,6 @@ volatile int rglStatus, rglNextStatus;
 
 static int wireframe;
 
-static uint32_t old_vi_origin;
-
 int rglFrameCounter;
 
 extern int viewportOffset;
@@ -255,9 +253,7 @@ void rglDeleteRenderBuffer(rglRenderBuffer_t & buffer)
 
 void rglFullSync()
 {
-  if (rglSettings.forceSwap)
-    // hack for starwars, perfect dark subscreen to prevent filling up our chunk table
-    old_vi_origin = ~0; 
+
 }
 
 // note : if "same" is 1 then both tiles use the same texture, in this
@@ -1084,12 +1080,6 @@ void rglDisplayFramebuffers()
 void rglUpdate()
 {
   int i;
-  
-  if (old_vi_origin == vi_origin) {
-    //printf("same\n");
-    return;
-  }
-  old_vi_origin = vi_origin;
 
   DUMP("updating vi_origin %x vi_hstart %d vi_vstart %d\n",
          vi_origin, *gfx.VI_H_START_REG, *gfx.VI_V_START_REG);
@@ -1236,8 +1226,6 @@ void rglPrepareRendering(int texturing, int tilenum, int recth, int depth)
 {
   if (!rdpChanged)
     goto ok;
-
-  //rglUpdate();
 
   depth = /*depth && */(RDP_GETOM_CYCLE_TYPE(rdpState.otherModes) < 2) &&
     (RDP_GETOM_Z_UPDATE_EN(rdpState.otherModes) ||

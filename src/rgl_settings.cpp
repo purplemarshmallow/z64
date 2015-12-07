@@ -96,8 +96,6 @@ int rglReadSettings()
         rglSettings.hiresFb = value;
       else if (!strcmp(key, "fb_info"))
         rglSettings.fbInfo = value;
-      else if (!strcmp(key, "force_swap"))
-        rglSettings.forceSwap = value;
       else if (!strcmp(key, "threaded"))
         rglSettings.threaded = value;
       else if (!strcmp(key, "async"))
