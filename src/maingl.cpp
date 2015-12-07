@@ -31,6 +31,7 @@
 #endif
 
 extern GFX_INFO gfx;
+volatile int rglVIupdate = 0;
 
 #ifdef THREADED
 volatile static int waiting;
@@ -46,6 +47,12 @@ int rdpThreadFunc(void * dummy)
       rglUpdateStatus();
     else
       rdp_process_list();
+
+	if (rglVIupdate == 1) {
+      rglUpdateVI();
+      rglVIupdate = 0;
+	}
+
     if (!rglSettings.async)
       SDL_SemPost(rdpCommandCompleteSema);
 #ifndef WIN32
@@ -236,10 +243,11 @@ EXPORT void CALL UpdateScreen (void)
 #ifdef THREADED
   if (rglSettings.threaded) {
     rdpPostCommand();
+    rglVIupdate = 1;
   } else
 #endif
   {
-    rglUpdate();
+    rglUpdateVI();
   }
 }
 
