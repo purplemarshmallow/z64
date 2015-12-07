@@ -684,13 +684,13 @@ static void rdp_set_texture_image(uint32_t w1, uint32_t w2)
   rdpTiFormat	= (w1 >> 21) & 0x7;
 	rdpTiSize		= (w1 >> 19) & 0x3;
 	rdpTiWidth	= (w1 & 0x3ff) + 1;
-	rdpTiAddress	= w2 & 0x01ffffff;
+	rdpTiAddress	= w2 & 0x0ffffff;
 }
 
 static void rdp_set_mask_image(uint32_t w1, uint32_t w2)
 {
   rdpChanged |= RDP_BITS_ZB_SETTINGS;
-	rdpZbAddress	= w2 & 0x01ffffff;
+	rdpZbAddress	= w2 & 0x0ffffff;
 }
 
 static void rdp_set_color_image(uint32_t w1, uint32_t w2)
@@ -699,7 +699,7 @@ static void rdp_set_color_image(uint32_t w1, uint32_t w2)
 	rdpFbFormat 	= (w1 >> 21) & 0x7;
 	rdpFbSize		= (w1 >> 19) & 0x3;
 	rdpFbWidth	= (w1 & 0x3ff) + 1;
-	rdpFbAddress	= w2 & 0x01ffffff;
+	rdpFbAddress	= w2 & 0x0ffffff;
 }
 
 /*****************************************************************************/
