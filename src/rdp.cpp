@@ -436,7 +436,7 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
   rdpChanged |= RDP_BITS_TMEM;
 
 	sl	= ((w1 >> 12) & 0xfff);
-	tl	= ((w1 >>  0) & 0xfff) << 11;
+	tl	= ((w1 >>  0) & 0xfff);
 	sh	= ((w2 >> 12) & 0xfff);
 	dxt	= ((w2 >>  0) & 0xfff);
 
