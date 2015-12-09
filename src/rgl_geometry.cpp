@@ -253,19 +253,19 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
 //     LOG("Fixing tilenum from 7 to 0\n");
 //     tilenum = 0;
 //   }
-	int j;
-	int xleft, xright, xleft_inc, xright_inc;
+	int j = 0;
+	int xleft = 0, xright = 0, xleft_inc = 0, xright_inc = 0;
 	//int xstart, xend;
-	int r, g, b, a, z, s, t, w;
-	int dr, dg, db, da;
+	int r = 0, g = 0, b = 0, a = 0, z = 0, s = 0, t = 0, w = 0;
+	int dr = 0, dg = 0, db = 0, da = 0;
 	int drdx = 0, dgdx = 0, dbdx = 0, dadx = 0, dzdx = 0, dsdx = 0, dtdx = 0, dwdx = 0;
 	int drdy = 0, dgdy = 0, dbdy = 0, dady = 0, dzdy = 0, dsdy = 0, dtdy = 0, dwdy = 0;
 	int drde = 0, dgde = 0, dbde = 0, dade = 0, dzde = 0, dsde = 0, dtde = 0, dwde = 0;
 	int flip = (w1 & 0x800000) ? 1 : 0;
 
-	int32_t yl, ym, yh;
-	int32_t xl, xm, xh;
-	int64_t dxldy, dxhdy, dxmdy;
+	int32_t yl = 0, ym = 0, yh = 0;
+	int32_t xl = 0, xm = 0, xh = 0;
+	int64_t dxldy = 0, dxhdy = 0, dxmdy = 0;
 	uint32_t w3, w4, w5, w6, w7, w8;
 
 	uint32_t * shade_base = rdp_cmd + 8;
@@ -315,9 +315,6 @@ void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
   if (yh & (0x800<<2)) yh |= 0xfffff000<<2;
 
   yh &= ~3;
-  
-	r = 0xff;	g = 0xff;	b = 0xff;	a = 0xff;	z = 0xffff0000;	s = 0;	t = 0;	w = 0x30000;
-	dr = 0;		dg = 0;		db = 0;		da = 0;
 
 	if (shade)
 	{
