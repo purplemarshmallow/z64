@@ -27,7 +27,7 @@
 rdpState_t rdpState;
 uint32_t   rdpChanged;
 //rdpColor_t rdpTlut[1024];
-uint8_t    rdpTmem[0x1000];
+uint8_t    rdpTmem[4*0x1000];
 int        rdpFbFormat;
 int        rdpFbSize;
 int        rdpFbWidth;
