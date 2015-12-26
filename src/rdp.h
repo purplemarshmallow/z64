@@ -204,6 +204,9 @@ extern uint32_t   rdpChanged;
 //extern rdpColor_t rdpTlut[];
 #define rdpTlut ((uint16_t *) (rdpTmem + 0x800))
 extern uint8_t    rdpTmem[];
+extern uint32_t rdp_cmd_data[];
+extern uint32_t rdp_cmd_ptr;
+extern uint32_t rdp_cmd_cur;
 extern int        rdpFbFormat;
 extern int        rdpFbSize;
 extern int        rdpFbWidth;

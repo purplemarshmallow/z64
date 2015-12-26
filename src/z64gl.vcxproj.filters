@@ -37,6 +37,12 @@
     <ClCompile Include="rgl_tiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="n64video.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Gfx #1.3.h">
@@ -61,6 +67,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="z64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SWHW.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

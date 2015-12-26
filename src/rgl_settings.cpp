@@ -110,7 +110,7 @@ int rglReadSettings()
         LOGERROR("Unknown config key '%s'\n", key);
     }
   }
-
+  rglSettings.hiresFb = 0;
   fclose(fp);
 
   return 0;

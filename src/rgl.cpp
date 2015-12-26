@@ -1520,6 +1520,7 @@ static void build_exptable()
 
 void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t stop)
 {
+	return;
   int depth;
 
   rglRenderChunks(&buffer);

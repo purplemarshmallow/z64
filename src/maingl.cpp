@@ -22,6 +22,7 @@
 #include "rdp.h"
 #include "rgl.h"
 #include "rgl_glut.h"
+#include "SWHW.h"
 
 #include <SDL.h>
 
@@ -169,6 +170,8 @@ static void glut_rdp_process_list()
 
 EXPORT void CALL ProcessRDPList(void)
 {
+		AL_rdp_process_list();
+		return;
 #ifdef RGL_USE_GLUT
   rglGlutPostCommand(glut_rdp_process_list);
 #else
@@ -182,7 +185,7 @@ EXPORT void CALL ProcessRDPList(void)
     rdp_process_list();
   }
 #endif
-  
+
   return;
 }
 
@@ -213,6 +216,8 @@ EXPORT void CALL RomClosed (void)
 
 EXPORT void CALL RomOpen (void)
 {
+	AL_rdp_init();
+	//return;
 #ifdef THREADED
   if (rglSettings.threaded) {
     rdpCreateThread();
@@ -225,6 +230,7 @@ EXPORT void CALL RomOpen (void)
     rglNextStatus = rglStatus = RGL_STATUS_WINDOWED;
     rglOpenScreen();
   }
+  
 }
 
 EXPORT void CALL ShowCFB (void)

@@ -17,7 +17,7 @@
  * USA.
  *
 **/
-
+#include "SWHW.h"
 #include "Gfx #1.3.h"
 #include "rdp.h"
 #include "rgl.h"
@@ -55,9 +55,9 @@ int rdp_dump;
 #endif
 
 #define MAXCMD 0x100000
-static uint32_t rdp_cmd_data[MAXCMD+32];
-static volatile int rdp_cmd_ptr = 0;
-static volatile int rdp_cmd_cur = 0;
+//static uint32_t rdp_cmd_data[MAXCMD+32];
+//static volatile int rdp_cmd_ptr = 0;
+//static volatile int rdp_cmd_cur = 0;
 static int rdp_cmd_left = 0;
 
 #ifdef RDP_DEBUG
@@ -314,12 +314,13 @@ void rdpWaitFullSync();
 #ifdef RDP_DEBUG
 int nbFullSync;
 #endif
+
 static void rdp_sync_full(uint32_t w1, uint32_t w2)
 {
   //printf("full sync\n");
   rglFullSync();
   rglUpdate();
-
+  return;
   if (rglSettings.async)
     rdpSignalFullSync();
   else {
@@ -701,9 +702,11 @@ static void rdp_set_color_image(uint32_t w1, uint32_t w2)
 	rdpFbSize		= (w1 >> 19) & 0x3;
 	rdpFbWidth	= (w1 & 0x3ff) + 1;
 	rdpFbAddress	= w2 & 0x0ffffff;
+
 }
 
 /*****************************************************************************/
+
 
 static void (* rdp_command_table[64])(uint32_t w1, uint32_t w2) =
 {
@@ -729,6 +732,10 @@ static void (* rdp_command_table[64])(uint32_t w1, uint32_t w2) =
 	rdp_set_combine,	rdp_set_texture_image,	rdp_set_mask_image,		rdp_set_color_image
 };
 
+void z64execute(uint32_t cmd){
+	rdp_command_table[cmd](rdp_cmd_data[rdp_cmd_cur + 0], rdp_cmd_data[rdp_cmd_cur + 1]);
+}
+
 void rdp_process_list(void)
 {
 	//int i;
@@ -745,6 +752,7 @@ void rdp_process_list(void)
   // but is necessary for in fisherman
   rglUpdate();
 
+  return;
 	while (rdp_cmd_cur != rdp_cmd_ptr)
 	{
 		cmd = (rdp_cmd_data[rdp_cmd_cur] >> 24) & 0x3f;
@@ -791,9 +799,9 @@ void rdp_process_list(void)
 
 // 	dp_current = dp_end;
 // 	dp_start = dp_end;
-	dp_start = dp_current;
+	//dp_start = dp_current;
 
-  dp_status &= ~0x0002;
+  //dp_status &= ~0x0002;
 }
 
 int rdp_store_list(void)
