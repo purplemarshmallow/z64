@@ -25,10 +25,7 @@
 
 #include <SDL.h>
 
-#define THREADED
-#ifdef WIN32
-#define THREADED
-#endif
+//#define THREADED
 
 extern GFX_INFO gfx;
 
