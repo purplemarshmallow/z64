@@ -382,7 +382,8 @@ static int sckeepodd = 0;
 int oldscyl = 0;
 
 
-UINT8 TMEM[0x1000];
+//UINT8 TMEM[0x1000];
+#define TMEM rdpTmem
 
 #define tlut ((UINT16*)(&TMEM[0x800]))
 
@@ -6402,7 +6403,7 @@ void loading_pipeline(int start, int end, int tilenum, int coord_quad, int ltlut
 static void edgewalker_for_prims(INT32* ewdata)
 {
 	//if (fb_width > 150)
-	//	return;
+		return;
 	int j = 0;
 	int xleft = 0, xright = 0, xleft_inc = 0, xright_inc = 0;
 	int r = 0, g = 0, b = 0, a = 0, z = 0, s = 0, t = 0, w = 0;
