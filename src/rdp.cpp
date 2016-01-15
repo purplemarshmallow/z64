@@ -17,7 +17,6 @@
  * USA.
  *
 **/
-#include "SWHW.h"
 #include "Gfx #1.3.h"
 #include "rdp.h"
 #include "rgl.h"

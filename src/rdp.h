@@ -199,6 +199,11 @@ struct rdpState_t {
   uint8_t           k5, clipMode;
 };
 
+int rdp_software_init();
+void rdp_software_process_list(void);
+
+extern void z64execute(unsigned int cmd);
+
 extern rdpState_t rdpState;
 extern uint32_t   rdpChanged;
 //extern rdpColor_t rdpTlut[];

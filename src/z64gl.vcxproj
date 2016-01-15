@@ -88,9 +88,8 @@
   <ItemGroup>
     <ClCompile Include="disasm.cpp" />
     <ClCompile Include="glshader.cpp" />
-    <ClCompile Include="main2.cpp" />
     <ClCompile Include="maingl.cpp" />
-    <ClCompile Include="n64video.cpp" />
+    <ClCompile Include="rdp_software.cpp" />
     <ClCompile Include="rdp.cpp" />
     <ClCompile Include="rgl.cpp" />
     <ClCompile Include="rgl_debugger.cpp" />
@@ -109,7 +108,6 @@
     <ClInclude Include="rgl.h" />
     <ClInclude Include="rgl_assert.h" />
     <ClInclude Include="rgl_glut.h" />
-    <ClInclude Include="SWHW.h" />
     <ClInclude Include="z64.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

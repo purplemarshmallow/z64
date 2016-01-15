@@ -1,10 +1,13 @@
 
-#include "z642.h"
+#include "rdp_software.h"
 #include "Gfx #1.3.h"
 #include "tctables.h"
-#include "SWHW.h"
 #include <stdarg.h>
 #include "rdp.h"
+
+RECT dst, src;
+INT32 pitchindwords;
+
 extern GFX_INFO gfx;
 
 
@@ -978,7 +981,7 @@ STRICTINLINE void tcclamp_cycle_light(INT32* S, INT32* T, INT32 maxs, INT32 maxt
 }
 
 
-int AL_rdp_init()
+int rdp_software_init()
 {
 	if (LOG_RDP_EXECUTION)
 		rdp_exec = fopen("rdp_execute.txt", "wt");
@@ -8140,7 +8143,7 @@ static void (*const rdp_command_table[64])(UINT32 w1, UINT32 w2) =
 	rdp_set_combine,	rdp_set_texture_image,	rdp_set_mask_image,		rdp_set_color_image
 };
 
-void AL_rdp_process_list(void)
+void rdp_software_process_list(void)
 {
 	int i, length;
 	UINT32 cmd, cmd_length;
