@@ -1035,9 +1035,6 @@ void rglDisplayFramebuffers()
     if (!(buffer->flags & RGL_RB_ERASED) &&
 		(uint32_t)vi_stop > buffer->addressStart &&
 		(uint32_t)vi_start < buffer->addressStop) {
-      
-      if (buffer->size != 2 || buffer->format != RDP_FORMAT_RGBA)
-        continue; // FIXME
 
       glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
       glDrawBuffer(GL_BACK);
