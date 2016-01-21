@@ -229,7 +229,7 @@ void rglClose();
 int rglOpenScreen();
 void rglCloseScreen();
 int rglReadSettings();
-void rglUpdateVI();
+void rglUpdate();
 void rglFullSync();
 void rglTextureRectangle(rdpTexRect_t * rect, int flip);
 void rglFillRectangle(rdpRect_t * rect);

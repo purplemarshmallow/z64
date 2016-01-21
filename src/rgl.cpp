@@ -1081,7 +1081,7 @@ void rglDisplayFramebuffers()
     }
 }
 
-void rglUpdateVI()
+void rglUpdate()
 {
   int i;
   
