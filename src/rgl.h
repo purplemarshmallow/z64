@@ -44,6 +44,7 @@ struct rglSettings_t {
   int resX, resY;
   int fsResX, fsResY;
   int fbInfo;
+  int forceSwap;
   int threaded;
   int async;
   int noNpotFbos;
