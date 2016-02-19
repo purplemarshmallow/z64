@@ -58,7 +58,7 @@ struct rglDepthBuffer_t {
   int width, height;
   GLuint zbid;
 };
-#define MAX_DEPTH_BUFFERS 16
+#define MAX_DEPTH_BUFFERS 256
 extern rglDepthBuffer_t zBuffers[MAX_DEPTH_BUFFERS];
 extern int nbZBuffers;
 
@@ -98,7 +98,7 @@ struct rglRenderBuffer_t {
 
 CIRCLEQ_HEAD(rglRenderBufferHead_t, rglRenderBuffer_t);
 
-#define MAX_RENDER_BUFFERS 64
+#define MAX_RENDER_BUFFERS 256
 extern rglRenderBuffer_t rBuffers[MAX_RENDER_BUFFERS];
 extern int nbRBuffers;
 extern rglRenderBuffer_t * curRBuffer;

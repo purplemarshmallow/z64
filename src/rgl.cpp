@@ -1212,8 +1212,8 @@ rglRenderBuffer_t * rglSelectRenderBuffer(uint32_t addr, int width, int size, in
   }
 
   rglAssert(nbRBuffers < MAX_RENDER_BUFFERS);
-//   if (nbRBuffers == MAX_RENDER_BUFFERS)
-//     rglClearRenderBuffers();
+    if (nbRBuffers == MAX_RENDER_BUFFERS)
+      rglClearRenderBuffers();
 
   i = nbRBuffers++;
   rglRenderBuffer_t * cur = rBuffers + i;
