@@ -775,9 +775,13 @@ void rdp_process_list(void)
     memcpy(rdpTraceBuf+rdpTracePos, rdp_cmd_data+rdp_cmd_cur, rdp_command_length[cmd]);
 #endif
 
-    if (rdp_cmd_cur + rdp_command_length[cmd]/4 > MAXCMD)
-      memcpy(rdp_cmd_data + MAXCMD, rdp_cmd_data, rdp_command_length[cmd] - (MAXCMD - rdp_cmd_cur)*4);
-    
+    if (rdp_cmd_cur + rdp_command_length[cmd]/4 > MAXCMD) {
+        size_t copy_length;
+
+        copy_length = rdp_command_length[cmd] - 4*(MAXCMD - rdp_cmd_cur);
+        memcpy(&rdp_cmd_data[MAXCMD], &rdp_cmd_data[0], copy_length);
+    }
+
 		// execute the command
 		rdp_command_table[cmd](rdp_cmd_data[rdp_cmd_cur+0], rdp_cmd_data[rdp_cmd_cur+1]);
 
