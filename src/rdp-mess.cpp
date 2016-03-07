@@ -2987,7 +2987,10 @@ static void rdp_sync_full(UINT32 w1, UINT32 w2)
 {
   // VP ?
 	//dp_full_sync();
+
+#if defined(_DEBUG)
   printf("full sync\n");
+#endif
   rdp_update();
 
   *gfx.MI_INTR_REG |= 0x20;
