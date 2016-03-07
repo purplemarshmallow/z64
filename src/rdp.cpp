@@ -54,8 +54,9 @@ static int nbTmemAreas;
 int rdp_dump;
 #endif
 
-#define MAXCMD 0x100000
-static uint32_t rdp_cmd_data[MAXCMD+32];
+#define MAXCMD                  0x100000
+#define CMD_OVERFLOW_RESERVE    32
+static uint32_t rdp_cmd_data[MAXCMD + CMD_OVERFLOW_RESERVE];
 static volatile int rdp_cmd_ptr = 0;
 static volatile int rdp_cmd_cur = 0;
 static int rdp_cmd_left = 0;
@@ -777,8 +778,16 @@ void rdp_process_list(void)
 
     if (rdp_cmd_cur + rdp_command_length[cmd]/4 > MAXCMD) {
         size_t copy_length;
+        const size_t limit = CMD_OVERFLOW_RESERVE * sizeof(rdp_cmd_data[0]);
 
         copy_length = rdp_command_length[cmd] - 4*(MAXCMD - rdp_cmd_cur);
+        if (copy_length > limit) {
+            fprintf(stderr,
+                "ERROR:  rdp_cmd_data[0x%X] overflow (%lu > %lu)\n",
+                MAXCMD, copy_length, limit
+            );
+            copy_length = limit;
+        }
         memcpy(&rdp_cmd_data[MAXCMD], &rdp_cmd_data[0], copy_length);
     }
 
