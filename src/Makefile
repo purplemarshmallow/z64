@@ -203,7 +203,7 @@ instruction:
 	$(warning please copy $(TARGET2) and $(TARGET4) in the plugins/ folder of the emulator)
 
 clean:
-	rm -rf $(OBJECTS) $(ALL)
+	rm -rf $(OBJECTS) $(OBJECTS2) $(OBJECTS3) $(OBJECTS4) $(OBJECTS5) $(ALL)
 
 rebuild: clean $(ALL)
 
