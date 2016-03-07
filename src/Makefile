@@ -27,9 +27,9 @@ CC	= gcc
 CXX	= g++
 LD	= g++
 STRIP	= strip
-#CFLAGS	= -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) $(GLUI_INCS) $(FTGL_INCS) -O2 -mtune=athlon-xp -ffast-math -funroll-loops -m3dnow -mmmx -msse -msse2 #-mfpmath=sse #-fomit-frame-pointer
-CFLAGS	= -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) $(GLUI_INCS) $(FTGL_INCS) -O1 -ffast-math -m3dnow -mmmx -msse -msse2
-LDFLAGS	= -g -rdynamic -lGL -lGLU -lGLEW -L/usr/X11R6/lib $(GLUI_LIBS) $(FTGL_LIBS) `sdl-config --libs` -lz
+#CFLAGS	= -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O2 -mtune=athlon-xp -ffast-math -funroll-loops -m3dnow -mmmx -msse -msse2 #-mfpmath=sse #-fomit-frame-pointer
+CFLAGS	= -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O1 -ffast-math -m3dnow -mmmx -msse -msse2
+LDFLAGS	= -g -rdynamic -lGL -lGLU -lGLEW -L/usr/X11R6/lib `sdl-config --libs` -lz
 DLFLAGS = -shared -Wl,-Bsymbolic
 O	= o
 COUT	= -c -o #
@@ -142,7 +142,7 @@ TARGET3 = tester
 TARGET3LD = -ldl
 TARGET4 = z64gl.so
 TARGET5 = zbench64
-TARGET4LD = -lGLEW -lIL
+TARGET4LD = -lGLEW
 else
 TARGET	= z64.dll
 TARGET2	= z64-rsp.dll
@@ -156,7 +156,9 @@ TARGET5LD = -lglew32 $(SDL_LIB)
 endif
 
 ifeq ("$(RDP_DEBUG)", "1")
-CFLAGS += -DRDP_DEBUG
+CFLAGS += $(GLUI_INCS) $(FTGL_INCS) -DRDP_DEBUG
+LDFLAGS += $(GLUI_LIBS) $(FTGL_LIBS)
+TARGET4LD += -lIL
 endif
 
 all: $(TARGET) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5) instruction

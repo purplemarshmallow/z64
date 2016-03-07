@@ -251,7 +251,14 @@ static void FATAL(const char * s, ...)
   va_end(ap);
   exit(0);
 }
-#ifndef WIN32
+
+#if 0 && !defined(WIN32)
+/*
+ * RDP_DEBUG entails other dependencies like GLUT, GLUI and IL.
+ *
+ * The `Makefile' environment should be responsible for #define'ing this,
+ * but here is the place and time to force otherwise if preferred.
+ */
 #define RDP_DEBUG
 #endif
 
