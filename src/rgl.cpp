@@ -1080,12 +1080,24 @@ void rglDisplayFramebuffers()
 
 void rglUpdate()
 {
-  int i;
-  
-  if (old_vi_origin == vi_origin) {
-    //printf("same\n");
-    return;
-  }
+    int i;
+    int vactivelines;
+    const int x1 = (*gfx.VI_H_START_REG >> 16) & 0x000003FF;
+    const int y1 = (*gfx.VI_V_START_REG >> 16) & 0x000003FF;
+    const int x2 = (*gfx.VI_H_START_REG >>  0) & 0x000003FF;
+    const int y2 = (*gfx.VI_V_START_REG >>  0) & 0x000003FF;
+    const int v_sync = *gfx.VI_V_SYNC_REG & 0x000003FF;
+    const int is_PAL = (v_sync > 550);
+    const int vitype = vi_control & 0x00000003;
+
+    vactivelines = v_sync - (is_PAL ? 47 : 37);
+    if (vactivelines < 0)
+        return;
+    if (!(vitype & 2))
+        return;
+    if (x2 < x1 || y2 < y1)
+        return;
+
   old_vi_origin = vi_origin;
 
   DUMP("updating vi_origin %x vi_hstart %d vi_vstart %d\n",
