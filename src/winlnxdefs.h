@@ -12,9 +12,9 @@ typedef long long LONGLONG;
 typedef int __int32;
 
 typedef void* HINSTANCE;
+typedef void* HWND;
 typedef int PROPSHEETHEADER;
 typedef int PROPSHEETPAGE;
-typedef int HWND;
 
 #define FALSE false
 #define TRUE true
