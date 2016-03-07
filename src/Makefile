@@ -94,6 +94,11 @@ LOUT	= -o #
 endif
 endif
 
+LBITS := $(shell getconf LONG_BIT)
+ifeq ($(LBITS),64)
+CFLAGS += -fPIC
+endif
+
 ifeq ("$(RGL_ASSERT)", "1")
 CFLAGS	+= -DRGL_ASSERT
 endif
