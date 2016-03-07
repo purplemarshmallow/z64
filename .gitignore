@@ -1,3 +1,24 @@
+# Makefile target 1:  z64 (MAME software port)
+z64.dll
+z64.so
+
+# Makefile target 2:  MAME RSP interpreter core (plugin port)
+z64-rsp.dll
+z64-rsp.so
+
+# Makefile target 3:  GBI microcode tester
+tester.exe
+tester
+
+# Makefile target 4:  z64 (OpenGL-accelerated branch)
+z64gl.dll
+z64gl.so
+
+# Makefile target 5:  GLSL and profiling
+zbench64
+zbench64log.txt
+zbench64err.txt
+
 # Compiled Object files
 *.slo
 *.lo
