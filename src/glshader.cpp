@@ -45,6 +45,14 @@ PFNGLCREATEPROGRAMOBJECTARBPROC xglCreateProgramObject;
 PFNGLGETINFOLOGARBPROC xglGetInfoLog;
 PFNGLGETOBJECTPARAMETERIVARBPROC xglGetObjectParameteriv;
 
+PFNGLBINDFRAMEBUFFERPROC xglBindFramebuffer;
+PFNGLGENFRAMEBUFFERSPROC xglGenFramebuffers;
+PFNGLDELETEFRAMEBUFFERSPROC xglDeleteFramebuffers;
+PFNGLDELETERENDERBUFFERSPROC xglDeleteRenderbuffers;
+PFNGLFRAMEBUFFERRENDERBUFFERPROC xglFramebufferRenderbuffer;
+PFNGLFRAMEBUFFERTEXTURE2DPROC xglFramebufferTexture2D;
+PFNGLCHECKFRAMEBUFFERSTATUSPROC xglCheckFramebufferStatus;
+
 int init_GL_extensions(void)
 {
     int number_of_errors;
@@ -71,6 +79,21 @@ int init_GL_extensions(void)
     xglGetObjectParameteriv = (PFNGLGETOBJECTPARAMETERIVARBPROC)
         glGetProcAddress("glGetObjectParameterivARB");
 
+    xglBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)
+        glGetProcAddress("glBindFramebufferEXT");
+    xglGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)
+        glGetProcAddress("glGenFramebuffersEXT");
+    xglDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)
+        glGetProcAddress("glDeleteFramebuffersEXT");
+    xglDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC)
+        glGetProcAddress("glDeleteRenderbuffersEXT");
+    xglFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)
+        glGetProcAddress("glFramebufferRenderbufferEXT");
+    xglCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)
+        glGetProcAddress("glCheckFramebufferStatusEXT");
+    xglFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)
+        glGetProcAddress("glFramebufferTexture2DEXT");
+
     number_of_errors += (xglLinkProgram == NULL) ? 1 : 0;
     number_of_errors += (xglCompileShader == NULL) ? 1 : 0;
     number_of_errors += (xglShaderSource == NULL) ? 1 : 0;
@@ -81,6 +104,10 @@ int init_GL_extensions(void)
     number_of_errors += (xglCreateProgramObject == NULL) ? 1 : 0;
     number_of_errors += (xglGetInfoLog == NULL) ? 1 : 0;
     number_of_errors += (xglGetObjectParameteriv == NULL) ? 1 : 0;
+
+    number_of_errors += (xglBindFramebuffer == NULL) ? 1 : 0;
+    number_of_errors += (xglGenFramebuffers == NULL) ? 1 : 0;
+    number_of_errors += (xglDeleteFramebuffers == NULL) ? 1 : 0;
     return (number_of_errors);
 }
 

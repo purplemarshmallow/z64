@@ -25,8 +25,19 @@
 #include "rgl_assert.h"
 #include "rdp.h"
 
-#include "GL/glew.h"
 #include <GL/gl.h>
+#include "GL/glext.h"
+
+extern PFNGLBINDFRAMEBUFFERPROC xglBindFramebuffer;
+
+extern PFNGLGENFRAMEBUFFERSPROC xglGenFramebuffers;
+extern PFNGLDELETEFRAMEBUFFERSPROC xglDeleteFramebuffers;
+
+extern PFNGLDELETERENDERBUFFERSPROC xglDeleteRenderbuffers;
+extern PFNGLFRAMEBUFFERRENDERBUFFERPROC xglFramebufferRenderbuffer;
+
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC xglCheckFramebufferStatus;
+extern PFNGLFRAMEBUFFERTEXTURE2DPROC xglFramebufferTexture2D;
 
 #ifdef RDP_DEBUG
 #include <IL/il.h>
