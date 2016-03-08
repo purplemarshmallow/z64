@@ -56,6 +56,10 @@ PFNGLUNIFORM1IPROC xglUniform1i;
 PFNGLGETUNIFORMLOCATIONPROC xglGetUniformLocation;
 PFNGLBLENDFUNCSEPARATEPROC xglBlendFuncSeparate;
 
+typedef void (APIENTRYP PFNGLMULTITEXCOORD2FPROC) (GLenum target, GLfloat s, GLfloat t);
+PFNGLACTIVETEXTUREPROC xglActiveTexture;
+PFNGLMULTITEXCOORD2FPROC xglMultiTexCoord2f;
+
 int init_GL_extensions(void)
 {
     int number_of_errors;
@@ -104,6 +108,11 @@ int init_GL_extensions(void)
     xglBlendFuncSeparate = (PFNGLBLENDFUNCSEPARATEPROC)
         glGetProcAddress("glBlendFuncSeparate");
 
+    xglActiveTexture = (PFNGLACTIVETEXTUREPROC)
+        glGetProcAddress("glActiveTextureARB");
+    xglMultiTexCoord2f = (PFNGLMULTITEXCOORD2FPROC)
+        glGetProcAddress("glMultiTexCoord2fARB");
+
     number_of_errors += (xglLinkProgram == NULL) ? 1 : 0;
     number_of_errors += (xglCompileShader == NULL) ? 1 : 0;
     number_of_errors += (xglShaderSource == NULL) ? 1 : 0;
@@ -126,6 +135,9 @@ int init_GL_extensions(void)
     number_of_errors += (xglUniform1i == NULL) ? 1 : 0;
     number_of_errors += (xglGetUniformLocation == NULL) ? 1 : 0;
     number_of_errors += (xglBlendFuncSeparate == NULL) ? 1 : 0;
+
+    number_of_errors += (xglActiveTexture == NULL) ? 1 : 0;
+    number_of_errors += (xglMultiTexCoord2f == NULL) ? 1 : 0;
     return (number_of_errors);
 }
 

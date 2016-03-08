@@ -734,11 +734,11 @@ void rglRenderChunks(int upto)
     
 #ifdef RGL_EXACT_BLEND
     glDisable(GL_BLEND);
-    glActiveTextureARB(GL_TEXTURE1_ARB);
+    xglActiveTexture(GL_TEXTURE1_ARB);
     glBindTexture(GL_TEXTURE_2D, buffer.texid2);
     glEnable(GL_TEXTURE_2D);
     rglAssert(glGetError() == GL_NO_ERROR);
-    glActiveTextureARB(GL_TEXTURE0_ARB);
+    xglActiveTexture(GL_TEXTURE0_ARB);
 #endif
 
     combFormat = (buffer.size == 1? RGL_COMB_FMT_I : RGL_COMB_FMT_RGBA);
@@ -769,14 +769,14 @@ void rglRenderChunks(int upto)
         } else
           glDisable(GL_TEXTURE_2D);
         
-        glActiveTextureARB(GL_TEXTURE2_ARB);
+        xglActiveTexture(GL_TEXTURE2_ARB);
         if (strip.flags & RGL_STRIP_TEX2) {
           //if (tile2.hiresBuffer) continue;
           combFormat |= rglUseTile(tile2, ds[1], dt[1], ss[1], st[1]) << 1;
           glEnable(GL_TEXTURE_2D);
         } else
           glDisable(GL_TEXTURE_2D);
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+        xglActiveTexture(GL_TEXTURE0_ARB);
       }
 
       if (j == 0)
@@ -815,12 +815,12 @@ void rglRenderChunks(int upto)
         rglFixupMapping(strip, tile,
                         ds[0], dt[0], ss[0], st[0], dsm[0], dtm[0],
                         (strip.flags & RGL_STRIP_TEX2) && tile.tex == tile2.tex);
-      if (strip.flags & RGL_STRIP_TEX2) {
-        glActiveTextureARB(GL_TEXTURE2_ARB);
-        rglFixupMapping(strip, tile2,
+        if (strip.flags & RGL_STRIP_TEX2) {
+            xglActiveTexture(GL_TEXTURE2_ARB);
+            rglFixupMapping(strip, tile2,
                         ds[1], dt[1], ss[1], st[1], dsm[1], dtm[1],
                         (strip.flags & RGL_STRIP_TEX1) && tile.tex == tile2.tex);
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+            xglActiveTexture(GL_TEXTURE0_ARB);
       }
       
       glBegin(GL_TRIANGLE_STRIP);
@@ -829,20 +829,20 @@ void rglRenderChunks(int upto)
           glColor4ub(strip.vtxs[k].r, strip.vtxs[k].g, strip.vtxs[k].b,
                      strip.vtxs[k].a);
         if (strip.flags & RGL_STRIP_TEX1)
-          glMultiTexCoord2fARB(GL_TEXTURE0_ARB,
+            xglMultiTexCoord2f(GL_TEXTURE0_ARB,
                                1-(strip.vtxs[k].s + ds[0] + dsm[0]) / ss[0],
                                1-(strip.vtxs[k].t + dt[0] + dtm[0]) / st[0]);
         if (strip.flags & RGL_STRIP_TEX2)
-          glMultiTexCoord2fARB(GL_TEXTURE2_ARB,
+            xglMultiTexCoord2f(GL_TEXTURE2_ARB,
                                1-(strip.vtxs[k].s + ds[1] + dsm[1]) / ss[1],
                                1-(strip.vtxs[k].t + dt[1] + dtm[1]) / st[1]);
 #ifdef RGL_EXACT_BLEND
-//         glMultiTexCoord2fARB(GL_TEXTURE1_ARB,
+//          xglMultiTexCoord2f(GL_TEXTURE1_ARB,
 //                              (strip.vtxs[k].x/(buffer.width))/**strip.vtxs[k].w*/,
 //                              (strip.vtxs[k].y/(buffer.height))/**strip.vtxs[k].w*/);
         // used only to pass the viewport information :/
         // tried with light position --> but it seems less precise !
-        glMultiTexCoord2fARB(GL_TEXTURE1_ARB,
+        xglMultiTexCoord2f(GL_TEXTURE1_ARB,
                              buffer.realWidth/2048.f,
                              buffer.realHeight/2048.f);
 #endif
@@ -916,18 +916,18 @@ void rglRenderChunks(int upto)
     buffer.flags |= RGL_RB_FBMOD;
   
 #ifdef RGL_EXACT_BLEND
-    glActiveTextureARB(GL_TEXTURE1_ARB);
+        xglActiveTexture(GL_TEXTURE1_ARB);
+        glDisable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        xglActiveTexture(GL_TEXTURE0_ARB);
+#endif
+    }
+
+    xglActiveTexture(GL_TEXTURE2_ARB);
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTextureARB(GL_TEXTURE0_ARB);
-#endif
-  }
+    xglActiveTexture(GL_TEXTURE0_ARB);
 
-  glActiveTextureARB(GL_TEXTURE2_ARB);
-  glDisable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-  
   renderedChunks = i;
 }
 
@@ -1047,9 +1047,9 @@ void rglDisplayFramebuffers()
       glDisable(GL_ALPHA_TEST);
       glDisable(GL_BLEND);
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      glActiveTextureARB(GL_TEXTURE1_ARB);
+      xglActiveTexture(GL_TEXTURE1_ARB);
       glDisable(GL_TEXTURE_2D);
-      glActiveTextureARB(GL_TEXTURE0_ARB);
+      xglActiveTexture(GL_TEXTURE0_ARB);
 
       
       

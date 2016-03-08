@@ -43,6 +43,10 @@ extern PFNGLUNIFORM1IPROC xglUniform1i;
 extern PFNGLGETUNIFORMLOCATIONPROC xglGetUniformLocation;
 extern PFNGLBLENDFUNCSEPARATEPROC xglBlendFuncSeparate;
 
+typedef void (APIENTRYP PFNGLMULTITEXCOORD2FPROC)(GLenum target, GLfloat s, GLfloat t);
+extern PFNGLACTIVETEXTUREPROC xglActiveTexture;
+extern PFNGLMULTITEXCOORD2FPROC xglMultiTexCoord2f;
+
 #ifdef RDP_DEBUG
 #include <IL/il.h>
 #endif
