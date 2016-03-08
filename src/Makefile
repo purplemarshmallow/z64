@@ -29,7 +29,7 @@ LD	= g++
 STRIP	= strip
 #CFLAGS	= -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O2 -mtune=athlon-xp -ffast-math -funroll-loops -m3dnow -mmmx -msse -msse2 #-mfpmath=sse #-fomit-frame-pointer
 CFLAGS	= -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O1 -ffast-math -m3dnow -mmmx -msse -msse2
-LDFLAGS	= -g -rdynamic -lGL -lGLU -lGLEW -L/usr/X11R6/lib `sdl-config --libs` -lz
+LDFLAGS	= -g -rdynamic -lGL -lGLU -L/usr/X11R6/lib `sdl-config --libs` -lz
 DLFLAGS = -shared -Wl,-Bsymbolic
 O	= o
 COUT	= -c -o #
@@ -147,16 +147,16 @@ TARGET3 = tester
 TARGET3LD = -ldl
 TARGET4 = z64gl.so
 TARGET5 = zbench64
-TARGET4LD = -lGLEW
+TARGET4LD = -lGL
 else
 TARGET	= z64.dll
 TARGET2	= z64-rsp.dll
 TARGET3 = tester.exe
 TARGET4 = z64gl.dll
 TARGET5 = zbench64.exe
-TARGET4LD = -lglew32 $(SDL_LIB) # /usr/mingw32/usr/lib/libSDL.a #-lSDL
-#TARGET5LD = -lglew32 /usr/mingw32/usr/lib/libSDL.a  -Dmain=SDL_main -lSDLmain -lmingw32 #-lSDL
-TARGET5LD = -lglew32 $(SDL_LIB)
+TARGET4LD = $(SDL_LIB) # /usr/mingw32/usr/lib/libSDL.a #-lSDL
+#TARGET5LD = /usr/mingw32/usr/lib/libSDL.a  -Dmain=SDL_main -lSDLmain -lmingw32 #-lSDL
+TARGET5LD = $(SDL_LIB)
 #CFLAGS	+=  -Dmain=SDL_main
 endif
 
