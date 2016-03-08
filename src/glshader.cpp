@@ -53,6 +53,10 @@ PFNGLFRAMEBUFFERRENDERBUFFERPROC xglFramebufferRenderbuffer;
 PFNGLFRAMEBUFFERTEXTURE2DPROC xglFramebufferTexture2D;
 PFNGLCHECKFRAMEBUFFERSTATUSPROC xglCheckFramebufferStatus;
 
+PFNGLUNIFORM1IPROC xglUniform1i;
+PFNGLGETUNIFORMLOCATIONPROC xglGetUniformLocation;
+PFNGLBLENDFUNCSEPARATEPROC xglBlendFuncSeparate;
+
 int init_GL_extensions(void)
 {
     int number_of_errors;
@@ -94,6 +98,13 @@ int init_GL_extensions(void)
     xglFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)
         glGetProcAddress("glFramebufferTexture2DEXT");
 
+    xglUniform1i = (PFNGLUNIFORM1IPROC)
+        glGetProcAddress("glUniform1iARB");
+    xglGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)
+        glGetProcAddress("glGetUniformLocationARB");
+    xglBlendFuncSeparate = (PFNGLBLENDFUNCSEPARATEPROC)
+        glGetProcAddress("glBlendFuncSeparate");
+
     number_of_errors += (xglLinkProgram == NULL) ? 1 : 0;
     number_of_errors += (xglCompileShader == NULL) ? 1 : 0;
     number_of_errors += (xglShaderSource == NULL) ? 1 : 0;
@@ -108,6 +119,14 @@ int init_GL_extensions(void)
     number_of_errors += (xglBindFramebuffer == NULL) ? 1 : 0;
     number_of_errors += (xglGenFramebuffers == NULL) ? 1 : 0;
     number_of_errors += (xglDeleteFramebuffers == NULL) ? 1 : 0;
+    number_of_errors += (xglDeleteRenderbuffers == NULL) ? 1 : 0;
+    number_of_errors += (xglFramebufferRenderbuffer == NULL) ? 1 : 0;
+    number_of_errors += (xglCheckFramebufferStatus == NULL) ? 1 : 0;
+    number_of_errors += (xglFramebufferTexture2D == NULL) ? 1 : 0;
+
+    number_of_errors += (xglUniform1i == NULL) ? 1 : 0;
+    number_of_errors += (xglGetUniformLocation == NULL) ? 1 : 0;
+    number_of_errors += (xglBlendFuncSeparate == NULL) ? 1 : 0;
     return (number_of_errors);
 }
 

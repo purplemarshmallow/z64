@@ -39,6 +39,10 @@ extern PFNGLFRAMEBUFFERRENDERBUFFERPROC xglFramebufferRenderbuffer;
 extern PFNGLCHECKFRAMEBUFFERSTATUSPROC xglCheckFramebufferStatus;
 extern PFNGLFRAMEBUFFERTEXTURE2DPROC xglFramebufferTexture2D;
 
+extern PFNGLUNIFORM1IPROC xglUniform1i;
+extern PFNGLGETUNIFORMLOCATIONPROC xglGetUniformLocation;
+extern PFNGLBLENDFUNCSEPARATEPROC xglBlendFuncSeparate;
+
 #ifdef RDP_DEBUG
 #include <IL/il.h>
 #endif
