@@ -318,7 +318,9 @@ int rglOpenScreen()
   sprintf(caption, "z64, LLE video plugin by Ziggy");
   SDL_WM_SetCaption(caption, caption);
 #endif // else WIN32
-  
+
+    printf("OpenGL device support errors:  %i\n", init_GL_extensions());
+
   rdp_init();
   //rsp_init(0);
 #endif
