@@ -162,14 +162,15 @@ void dobenchmark()
     tex[i] = i*7;
   }
   tex[1] = 255;
-  glBindTexture(GL_TEXTURE_2D, 1);
-  glActiveTextureARB(GL_TEXTURE1_ARB);
-  glBindTexture(GL_TEXTURE_2D, 1);
-  glActiveTextureARB(GL_TEXTURE2_ARB);
-  glBindTexture(GL_TEXTURE_2D, 1);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-	       tex);
+    glBindTexture(GL_TEXTURE_2D, 1);
+    xglActiveTexture(GL_TEXTURE1_ARB);
+    glBindTexture(GL_TEXTURE_2D, 1);
+    xglActiveTexture(GL_TEXTURE2_ARB);
+    glBindTexture(GL_TEXTURE_2D, 1);
+    xglActiveTexture(GL_TEXTURE0_ARB);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGBA, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex
+    );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                    GL_LINEAR );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
@@ -246,9 +247,9 @@ void dobenchmark()
     ,1
   );
 
-  glActiveTextureARB(GL_TEXTURE1_ARB);
-  glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, env);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
+    xglActiveTexture(GL_TEXTURE1_ARB);
+    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, env);
+    xglActiveTexture(GL_TEXTURE0_ARB);
   test(4, commonv,
     "  gl_FragColor = gl_TextureEnvColor[1] * texture2D(texture0, vec2(gl_TexCoord[0])); \n"
     ,1
