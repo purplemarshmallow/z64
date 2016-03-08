@@ -38,20 +38,37 @@ static __inline__ unsigned long long RDTSC(void)
 
 void renderquad(int nbtex)
 {
-  glBegin(GL_TRIANGLE_STRIP);
-  if (nbtex == 2) glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0.5, 0);
-  if (nbtex == 3) glMultiTexCoord2fARB(GL_TEXTURE2_ARB, 0.5, 0);
-  glMultiTexCoord2fARB(GL_TEXTURE0_ARB, 1, 0); glVertex3f(1, 0, 0);
-  if (nbtex == 2) glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0, 0);
-  if (nbtex == 3) glMultiTexCoord2fARB(GL_TEXTURE2_ARB, 0, 0);
-  glMultiTexCoord2fARB(GL_TEXTURE0_ARB, 0, 0); glVertex3f(0, 0, 1);
-  if (nbtex == 2) glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0.5, 0.5);
-  if (nbtex == 3) glMultiTexCoord2fARB(GL_TEXTURE2_ARB, 0.5, 0.5);
-  glMultiTexCoord2fARB(GL_TEXTURE0_ARB, 1, 1); glVertex3f(1, 1, 1);
-  if (nbtex == 2) glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 0, 0.5);
-  if (nbtex == 3) glMultiTexCoord2fARB(GL_TEXTURE2_ARB, 0, 0.5);
-  glMultiTexCoord2fARB(GL_TEXTURE0_ARB, 0, 1); glVertex3f(0, 1, 0);
-  glEnd();
+    glBegin(GL_TRIANGLE_STRIP);
+
+    if (nbtex == 2)
+        xglMultiTexCoord2f(GL_TEXTURE1_ARB, 0.5, 0);
+    if (nbtex == 3)
+        xglMultiTexCoord2f(GL_TEXTURE2_ARB, 0.5, 0);
+    xglMultiTexCoord2f(GL_TEXTURE0_ARB, 1, 0);
+    glVertex3f(1, 0, 0);
+
+    if (nbtex == 2)
+        xglMultiTexCoord2f(GL_TEXTURE1_ARB, 0, 0);
+    if (nbtex == 3)
+        xglMultiTexCoord2f(GL_TEXTURE2_ARB, 0, 0);
+    xglMultiTexCoord2f(GL_TEXTURE0_ARB, 0, 0);
+    glVertex3f(0, 0, 1);
+
+    if (nbtex == 2)
+        xglMultiTexCoord2f(GL_TEXTURE1_ARB, 0.5, 0.5);
+    if (nbtex == 3)
+        xglMultiTexCoord2f(GL_TEXTURE2_ARB, 0.5, 0.5);
+    xglMultiTexCoord2f(GL_TEXTURE0_ARB, 1, 1);
+    glVertex3f(1, 1, 1);
+
+    if (nbtex == 2)
+        xglMultiTexCoord2f(GL_TEXTURE1_ARB, 0, 0.5);
+    if (nbtex == 3)
+        xglMultiTexCoord2f(GL_TEXTURE2_ARB, 0, 0.5);
+    xglMultiTexCoord2f(GL_TEXTURE0_ARB, 0, 1);
+    glVertex3f(0, 1, 0);
+
+    glEnd();
 }
 
 void test(int num, const char * vsrc, const char * fsrc, int nbtex)
@@ -88,18 +105,19 @@ void test(int num, const char * vsrc, const char * fsrc, int nbtex)
   shader = rglCreateShader(vsrc, src);
 
   rglUseShader(shader);
-  int location;
-  location = glGetUniformLocationARB(shader->prog, "texture0");
-  glUniform1iARB(location, 0);
-  if (nbtex == 2) {
-    location = glGetUniformLocationARB(shader->prog, "texture1");
-    glUniform1iARB(location, 1);
-  }
-  if (nbtex == 3) {
-    location = glGetUniformLocationARB(shader->prog, "texture2");
-    glUniform1iARB(location, 2);
-  }
 
+    int location;
+
+    location = xglGetUniformLocation(shader->prog, "texture0");
+    xglUniform1i(location, 0);
+    if (nbtex == 2) {
+        location = xglGetUniformLocation(shader->prog, "texture1");
+        xglUniform1i(location, 1);
+    }
+    if (nbtex == 3) {
+        location = xglGetUniformLocation(shader->prog, "texture2");
+        xglUniform1i(location, 2);
+    }
 
   glDisable(GL_DEPTH_TEST);
   glViewport(0, 0, screen_width, screen_height);
@@ -119,13 +137,17 @@ void test(int num, const char * vsrc, const char * fsrc, int nbtex)
   fflush(stdout);
 }
 
+static int GL_failed = -1;
 void dobenchmark()
 {
   static char tex[256*256*4];
   int i;
   float env[4];
 
-  glewInit();
+    if (GL_failed < 0) {
+        GL_failed = init_GL_extensions();
+	printf("Errors loading OpenGL extensions:  %i\n", GL_failed);
+    }
 
   glViewport(0, 0, screen_width, screen_height);
 
@@ -299,7 +321,7 @@ void dobenchmark()
   );
 }
 
-int main(int argc, char * * argv)
+int main(int argc, char ** argv)
 {
   printf("main\n");
 
@@ -363,7 +385,7 @@ int main(int argc, char * * argv)
   sprintf(caption, "z64 benchmarker");
   SDL_WM_SetCaption(caption, caption);
 
-  dobenchmark();
+    dobenchmark();
 
   rglUseShader(0);
   SDL_GL_SwapBuffers();
