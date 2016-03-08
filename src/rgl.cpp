@@ -133,7 +133,7 @@ int rglScreenWidth = 320, rglScreenHeight = 240;
 #define CHECK_FRAMEBUFFER_STATUS() \
 {\
  GLenum status; \
- status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT); \
+ status = xglCheckFramebufferStatus(GL_FRAMEBUFFER_EXT); \
  /*LOGERROR("%x\n", status);*/\
  switch(status) { \
  case GL_FRAMEBUFFER_COMPLETE_EXT: \
@@ -235,17 +235,17 @@ void rglDeleteRenderBuffer(rglRenderBuffer_t & buffer)
   buffer.mod.xh = buffer.mod.yh = 8192;
   buffer.depthBuffer = 0;
 #ifndef NOFBO
-  if (buffer.fbid) {
-    glDeleteFramebuffersEXT(1, &buffer.fbid);
-    buffer.fbid = 0;
-  }
+    if (buffer.fbid) {
+        xglDeleteFramebuffers(1, &buffer.fbid);
+        buffer.fbid = 0;
+    }
   if (buffer.texid) {
     glDeleteTextures(1, &buffer.texid);
     buffer.texid = 0;
   }
   buffer.nbDepthSections = 0;
 #ifdef RGL_EXACT_BLEND
-  glDeleteFramebuffersEXT(1, &buffer.fbid2);
+    xglDeleteFramebuffers(1, &buffer.fbid2);
   buffer.fbid2 = 0;
   glDeleteTextures(1, &buffer.texid2);
   buffer.texid2 = 0;
@@ -460,10 +460,10 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
     buffer.fboHeight = h;
     
 #ifdef RGL_EXACT_BLEND
-    glGenFramebuffersEXT(1, &buffer.fbid2);
+    xglGenFramebuffers(1, &buffer.fbid2);
     rglAssert(glGetError() == GL_NO_ERROR);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer.fbid2);
-    
+    xglBindFramebuffer(GL_FRAMEBUFFER_EXT, buffer.fbid2);
+
     // FIXME we should not need to allocate a color texture for depth only rendering
     if (1||!(buffer.flags & RGL_RB_DEPTH)) {
       glGenTextures(1, &buffer.texid2);
@@ -481,7 +481,7 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
 
       rglAssert(glGetError() == GL_NO_ERROR);
       glBindTexture(GL_TEXTURE_2D, 0);
-      glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+        xglFramebufferTexture2D(GL_FRAMEBUFFER_EXT,
                                 GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D,
                                 buffer.texid2, 0);
     }      
@@ -490,11 +490,11 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
     if (restoreId) {
       buffer.fbid = restoreFbid;
     } else {
-      glGenFramebuffersEXT(1, &buffer.fbid);
-      rglAssert(glGetError() == GL_NO_ERROR);
+        xglGenFramebuffers(1, &buffer.fbid);
+        rglAssert(glGetError() == GL_NO_ERROR);
     }
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer.fbid);
-    
+    xglBindFramebuffer(GL_FRAMEBUFFER_EXT, buffer.fbid);
+
     // FIXME we should not need to allocate a color texture for depth only rendering
     if (1||!(buffer.flags & RGL_RB_DEPTH)) {
       glGenTextures(1, &buffer.texid);
@@ -514,11 +514,11 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
 
       rglAssert(glGetError() == GL_NO_ERROR);
       glBindTexture(GL_TEXTURE_2D, 0);
-      glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+        xglFramebufferTexture2D(GL_FRAMEBUFFER_EXT,
                                 GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D,
                                 buffer.texid, 0);
 
-      glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0 );
+        xglFramebufferRenderbuffer(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0);
 
       if (!restoreId) {
         glClearColor(0, 0, 0, 1);
@@ -540,9 +540,9 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
       }
     }      
   } else
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer.fbid);
+    xglBindFramebuffer(GL_FRAMEBUFFER_EXT, buffer.fbid);
 #endif
-  
+
   rglAssert(glGetError() == GL_NO_ERROR);
 
     // hack for LEGO racer, real fix coming soon
@@ -642,21 +642,21 @@ void rglRenderChunks(int upto)
       }
 
 #ifndef NOFBO
-      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer.fbid);
+        xglBindFramebuffer(GL_FRAMEBUFFER_EXT, buffer.fbid);
 
       rglDepthBuffer_t * zbuf = rglFindDepthBuffer(chunk.depthAddress,
 						   buffer.fboWidth, buffer.fboHeight);
       if (zbuf != buffer.depthBuffer) {
         buffer.depthBuffer = zbuf;
 #ifdef ZTEX
-        glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+          xglFramebufferTexture2D(GL_FRAMEBUFFER_EXT,
                                   GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D,
                                   buffer.depthBuffer->zbid, 0);
 #else
-        glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, buffer.depthBuffer->zbid );
+          xglFramebufferRenderbuffer(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, buffer.depthBuffer->zbid );
 #endif
-//     glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-//                                   GL_RENDERBUFFER_EXT, depthBuffer->zbid );
+//          xglFramebufferRenderbuffer(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+//                                   GL_RENDERBUFFER_EXT, depthBuffer->zbid);
 
         CHECK_FRAMEBUFFER_STATUS();
       }
@@ -678,7 +678,7 @@ void rglRenderChunks(int upto)
 #ifndef NOFBO
 #ifdef RGL_EXACT_BLEND
     glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer.fbid2);
+    xglBindFramebuffer(GL_FRAMEBUFFER_EXT, buffer.fbid2);
     glBindTexture(GL_TEXTURE_2D, buffer.texid);
     glEnable(GL_TEXTURE_2D);
     rglUseShader(rglCopyShader);
@@ -700,7 +700,7 @@ void rglRenderChunks(int upto)
       glEnd();
     }
     glBindTexture(GL_TEXTURE_2D, 0);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, buffer.fbid);
+    xglBindFramebuffer(GL_FRAMEBUFFER_EXT, buffer.fbid);
     glPopAttrib();
 #endif
 #endif
@@ -734,11 +734,11 @@ void rglRenderChunks(int upto)
     
 #ifdef RGL_EXACT_BLEND
     glDisable(GL_BLEND);
-    glActiveTextureARB(GL_TEXTURE1_ARB);
+    xglActiveTexture(GL_TEXTURE1_ARB);
     glBindTexture(GL_TEXTURE_2D, buffer.texid2);
     glEnable(GL_TEXTURE_2D);
     rglAssert(glGetError() == GL_NO_ERROR);
-    glActiveTextureARB(GL_TEXTURE0_ARB);
+    xglActiveTexture(GL_TEXTURE0_ARB);
 #endif
 
     combFormat = (buffer.size == 1? RGL_COMB_FMT_I : RGL_COMB_FMT_RGBA);
@@ -769,14 +769,14 @@ void rglRenderChunks(int upto)
         } else
           glDisable(GL_TEXTURE_2D);
         
-        glActiveTextureARB(GL_TEXTURE2_ARB);
+        xglActiveTexture(GL_TEXTURE2_ARB);
         if (strip.flags & RGL_STRIP_TEX2) {
           //if (tile2.hiresBuffer) continue;
           combFormat |= rglUseTile(tile2, ds[1], dt[1], ss[1], st[1]) << 1;
           glEnable(GL_TEXTURE_2D);
         } else
           glDisable(GL_TEXTURE_2D);
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+        xglActiveTexture(GL_TEXTURE0_ARB);
       }
 
       if (j == 0)
@@ -815,12 +815,12 @@ void rglRenderChunks(int upto)
         rglFixupMapping(strip, tile,
                         ds[0], dt[0], ss[0], st[0], dsm[0], dtm[0],
                         (strip.flags & RGL_STRIP_TEX2) && tile.tex == tile2.tex);
-      if (strip.flags & RGL_STRIP_TEX2) {
-        glActiveTextureARB(GL_TEXTURE2_ARB);
-        rglFixupMapping(strip, tile2,
+        if (strip.flags & RGL_STRIP_TEX2) {
+            xglActiveTexture(GL_TEXTURE2_ARB);
+            rglFixupMapping(strip, tile2,
                         ds[1], dt[1], ss[1], st[1], dsm[1], dtm[1],
                         (strip.flags & RGL_STRIP_TEX1) && tile.tex == tile2.tex);
-        glActiveTextureARB(GL_TEXTURE0_ARB);
+            xglActiveTexture(GL_TEXTURE0_ARB);
       }
       
       glBegin(GL_TRIANGLE_STRIP);
@@ -829,20 +829,20 @@ void rglRenderChunks(int upto)
           glColor4ub(strip.vtxs[k].r, strip.vtxs[k].g, strip.vtxs[k].b,
                      strip.vtxs[k].a);
         if (strip.flags & RGL_STRIP_TEX1)
-          glMultiTexCoord2fARB(GL_TEXTURE0_ARB,
+            xglMultiTexCoord2f(GL_TEXTURE0_ARB,
                                1-(strip.vtxs[k].s + ds[0] + dsm[0]) / ss[0],
                                1-(strip.vtxs[k].t + dt[0] + dtm[0]) / st[0]);
         if (strip.flags & RGL_STRIP_TEX2)
-          glMultiTexCoord2fARB(GL_TEXTURE2_ARB,
+            xglMultiTexCoord2f(GL_TEXTURE2_ARB,
                                1-(strip.vtxs[k].s + ds[1] + dsm[1]) / ss[1],
                                1-(strip.vtxs[k].t + dt[1] + dtm[1]) / st[1]);
 #ifdef RGL_EXACT_BLEND
-//         glMultiTexCoord2fARB(GL_TEXTURE1_ARB,
+//          xglMultiTexCoord2f(GL_TEXTURE1_ARB,
 //                              (strip.vtxs[k].x/(buffer.width))/**strip.vtxs[k].w*/,
 //                              (strip.vtxs[k].y/(buffer.height))/**strip.vtxs[k].w*/);
         // used only to pass the viewport information :/
         // tried with light position --> but it seems less precise !
-        glMultiTexCoord2fARB(GL_TEXTURE1_ARB,
+        xglMultiTexCoord2f(GL_TEXTURE1_ARB,
                              buffer.realWidth/2048.f,
                              buffer.realHeight/2048.f);
 #endif
@@ -916,18 +916,18 @@ void rglRenderChunks(int upto)
     buffer.flags |= RGL_RB_FBMOD;
   
 #ifdef RGL_EXACT_BLEND
-    glActiveTextureARB(GL_TEXTURE1_ARB);
+        xglActiveTexture(GL_TEXTURE1_ARB);
+        glDisable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        xglActiveTexture(GL_TEXTURE0_ARB);
+#endif
+    }
+
+    xglActiveTexture(GL_TEXTURE2_ARB);
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTextureARB(GL_TEXTURE0_ARB);
-#endif
-  }
+    xglActiveTexture(GL_TEXTURE0_ARB);
 
-  glActiveTextureARB(GL_TEXTURE2_ARB);
-  glDisable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-  
   renderedChunks = i;
 }
 
@@ -1020,7 +1020,7 @@ void rglDisplayFramebuffers()
   return;
 #endif
 
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+   xglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
   glDrawBuffer(GL_BACK);
   glViewport(0, viewportOffset, screen_width, screen_height);
   glDisable(GL_SCISSOR_TEST);
@@ -1036,7 +1036,7 @@ void rglDisplayFramebuffers()
 		(uint32_t)vi_stop > buffer->addressStart &&
 		(uint32_t)vi_start < buffer->addressStop) {
 
-      glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+        xglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
       glDrawBuffer(GL_BACK);
       glViewport(0, viewportOffset, screen_width, screen_height);
       
@@ -1047,9 +1047,9 @@ void rglDisplayFramebuffers()
       glDisable(GL_ALPHA_TEST);
       glDisable(GL_BLEND);
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-      glActiveTextureARB(GL_TEXTURE1_ARB);
+      xglActiveTexture(GL_TEXTURE1_ARB);
       glDisable(GL_TEXTURE_2D);
-      glActiveTextureARB(GL_TEXTURE0_ARB);
+      xglActiveTexture(GL_TEXTURE0_ARB);
 
       
       
@@ -1098,7 +1098,7 @@ void rglUpdate()
   rglDisplayFramebuffers();
 
 #ifndef NOFBO
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+    xglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
 #endif
   rglUseShader(0);
   glDrawBuffer(GL_BACK);
@@ -1176,10 +1176,10 @@ void rglClearRenderBuffers()
   int i;
   for (i=0; i<nbRBuffers; i++)
     rglDeleteRenderBuffer(rBuffers[i]);
-  for (i=0; i<nbZBuffers; i++) {
-    glDeleteRenderbuffersEXT(1, &zBuffers[i].zbid);
-    zBuffers[i].zbid = 0;
-  }
+    for (i = 0; i < nbZBuffers; i++) {
+        xglDeleteRenderbuffers(1, &zBuffers[i].zbid);
+        zBuffers[i].zbid = 0;
+    }
 
   for (i=0; i<MAX_RENDER_BUFFERS; i++) {
     rglRenderBuffer_t & buffer = rBuffers[i];
@@ -1368,7 +1368,6 @@ int rglInit()
   static int init;
   if (!init) {
     init = 1;
-    glewInit();
   }
 
   glViewport(0, 0, screen_width, screen_height);
@@ -1571,7 +1570,7 @@ void rglFramebuffer2Rdram(rglRenderBuffer_t & buffer, uint32_t start, uint32_t s
 
   glPushAttrib(GL_ALL_ATTRIB_BITS);
 #ifndef NOFBO
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+    xglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
 #endif
   glDrawBuffer(GL_BACK);
   glReadBuffer(GL_BACK);

@@ -245,7 +245,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   env[3] = RDP_GETC32_A(state.fogColor)/255.0f;
   glLightfv(GL_LIGHT0, GL_DIFFUSE, env);
   
-  glActiveTextureARB(GL_TEXTURE1_ARB);
+    xglActiveTexture(GL_TEXTURE1_ARB);
   env[0] = state.k5/255.0f;
   glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, env);
   if (cycle == RDP_CYCLE_TYPE_FILL) {
@@ -267,7 +267,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
     env[3] = RDP_GETC32_A(state.primColor)/255.0f;
   }
   glLightfv(GL_LIGHT0, GL_SPECULAR, env);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
+  xglActiveTexture(GL_TEXTURE0_ARB);
   rglAssert(glGetError() == GL_NO_ERROR);
   
 //   if (c && rglNbCombiners &&
@@ -696,16 +696,17 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   rglAssert(glGetError() == GL_NO_ERROR);
   
 #if 1
-  int location;
-  location = glGetUniformLocationARB(c->shader->prog, "texture0");
-  glUniform1iARB(location, 0);
+    int location;
+
+    location = xglGetUniformLocation(c->shader->prog, "texture0");
+    xglUniform1i(location, 0);
 #ifdef RGL_EXACT_BLEND
-  location = glGetUniformLocationARB(c->shader->prog, "texture1");
-  glUniform1iARB(location, 1);
+    location = xglGetUniformLocation(c->shader->prog, "texture1");
+    xglUniform1i(location, 1);
 #endif
-  location = glGetUniformLocationARB(c->shader->prog, "texture2");
-  glUniform1iARB(location, 2);
-  rglAssert(glGetError() == GL_NO_ERROR);
+    location = xglGetUniformLocation(c->shader->prog, "texture2");
+    xglUniform1i(location, 2);
+    rglAssert(glGetError() == GL_NO_ERROR);
 #endif
 
 ok:;
@@ -715,10 +716,10 @@ ok:;
     glDisable(GL_BLEND);
   else {
     glEnable(GL_BLEND);
-    if ((format & RGL_COMB_FMT) == RGL_COMB_FMT_RGBA)
-      glBlendFuncSeparate(c->srcBlend, c->dstBlend, GL_ZERO, GL_ONE);
-    else
-      glBlendFunc(c->srcBlend, c->dstBlend);
+      if ((format & RGL_COMB_FMT) == RGL_COMB_FMT_RGBA)
+          xglBlendFuncSeparate(c->srcBlend, c->dstBlend, GL_ZERO, GL_ONE);
+      else
+          glBlendFunc(c->srcBlend, c->dstBlend);
   }
 #endif
 }
