@@ -1,7 +1,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <X11/X.h>
 #include <GL/glx.h>
 #endif
 
