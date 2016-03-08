@@ -16,18 +16,29 @@
  * 2016.03.07 cxd4 -- Instead of depending on GLEW, it should be easy enough
  * to establish what's in common between the extension-loading variations.
  */
-#ifdef __egl_h_ /* mobile or embedded devices and OpenGL ES */
-#define glGetProcAddress(fn)    eglGetProcAddress(fn)
-#elif defined(GLX_H) /* Linux X-windowing system interface */
-#define glGetProcAddress(fn)    glXGetProcAddress((const GLubyte *)fn)
-#elif defined(_WINGDI_) /* Windows GDI generic software interface */
-#define glGetProcAddress(fn)    wglGetProcAddress((LPCSTR)fn)
-#elif defined(_SDL_H) /* Simple DirectMedia Layer */
-#define glGetProcAddress(fn)    SDL_GL_GetProcAddress(fn)
+void* glGetProcAddress(const char* command_name)
+{
+    void* procedure_address;
+
+    procedure_address = (void *)
+#ifdef __egl_h_
+        eglGetProcAddress( /* mobile or embedded devices and OpenGL ES */
+#elif defined(GLX_H)
+        glXGetProcAddress((const GLubyte *) /* Unix windowing interface */
+#elif defined(_WINGDI_)
+        wglGetProcAddress((LPCSTR) /* Windows GDI generic software interface */
+#elif defined(_SDL_H)
+        SDL_GL_GetProcAddress( /* Simple DirectMedia Layer */
 #else
-#error \
-Unimplemented on this OS, or you forgot to include context creation API for it?
+#error Unimplemented on this OS.
 #endif
+            command_name
+        )
+    ;
+    if (procedure_address == NULL)
+        fprintf(stderr, "ERROR:  missing %s\n", command_name);
+    return (procedure_address);
+}
 
 PFNGLLINKPROGRAMPROC xglLinkProgram;
 PFNGLSHADERSOURCEPROC xglShaderSource;
