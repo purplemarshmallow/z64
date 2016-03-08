@@ -245,7 +245,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   env[3] = RDP_GETC32_A(state.fogColor)/255.0f;
   glLightfv(GL_LIGHT0, GL_DIFFUSE, env);
   
-  glActiveTextureARB(GL_TEXTURE1_ARB);
+    xglActiveTexture(GL_TEXTURE1_ARB);
   env[0] = state.k5/255.0f;
   glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, env);
   if (cycle == RDP_CYCLE_TYPE_FILL) {
@@ -267,7 +267,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
     env[3] = RDP_GETC32_A(state.primColor)/255.0f;
   }
   glLightfv(GL_LIGHT0, GL_SPECULAR, env);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
+  xglActiveTexture(GL_TEXTURE0_ARB);
   rglAssert(glGetError() == GL_NO_ERROR);
   
 //   if (c && rglNbCombiners &&
