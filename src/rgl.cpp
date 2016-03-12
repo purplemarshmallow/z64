@@ -1290,8 +1290,18 @@ void rglPrepareRendering(int texturing, int tilenum, int recth, int depth)
 //   if (curZBuffer)
 //     curZBuffer->chunkId = nbChunks;
 
+  if (nbChunks >= MAX_RENDER_CHUNKS - 1 || nbStrips >= MAX_STRIPS - 1000 || nbVtxs >= 6 * MAX_STRIPS - 6000)
+  {
+	  fprintf(stderr,
+		  "ERROR: nbChunks: %d, nbStrips: %d, nbVtxs: %d\n",
+		  nbChunks, nbStrips, nbVtxs
+		  );
+
+	  old_vi_origin = ~0;
+	  rglUpdate();
+  }
+
   curChunk = chunks + nbChunks++;
-  rglAssert(nbChunks < MAX_RENDER_CHUNKS);
 
   curChunk->strips = strips + nbStrips;
   curChunk->nbStrips = 0;
