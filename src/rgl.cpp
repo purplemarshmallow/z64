@@ -189,6 +189,13 @@ rglDepthBuffer_t * rglFindDepthBuffer(uint32_t address, int width, int height)
       return zBuffers+i;
 
   rglAssert(nbZBuffers < MAX_DEPTH_BUFFERS);
+
+  if (nbZBuffers >= MAX_DEPTH_BUFFERS)
+  {
+    rglClearChunks();
+    rglClearRenderBuffers();
+  }
+
   buffer = zBuffers + nbZBuffers++;
 
   LOG("Creating depth buffer %x %d x %d\n", address, width, height);
@@ -1078,6 +1085,24 @@ void rglDisplayFramebuffers()
     }
 }
 
+void rglClearChunks()
+{
+	rglRenderChunks(nbChunks);
+
+	renderedChunks = 0;
+	nbChunks = 0;
+	nbStrips = 0;
+	nbVtxs = 0;
+
+	for (int i = 0; i<nbRBuffers; i++) {
+		rglRenderBuffer_t & buffer = rBuffers[i];
+		buffer.area.xl = buffer.area.yl = 0;
+		buffer.area.xh = buffer.area.yh = 8192;
+		buffer.chunkId = 0;
+		buffer.nbDepthSections = 0;
+	}
+}
+
 void rglUpdate()
 {
   int i;
@@ -1212,8 +1237,11 @@ rglRenderBuffer_t * rglSelectRenderBuffer(uint32_t addr, int width, int size, in
   }
 
   rglAssert(nbRBuffers < MAX_RENDER_BUFFERS);
-    if (nbRBuffers == MAX_RENDER_BUFFERS)
-      rglClearRenderBuffers();
+  if (nbRBuffers >= MAX_RENDER_BUFFERS)
+  {
+    rglClearChunks();
+    rglClearRenderBuffers();
+  }
 
   i = nbRBuffers++;
   rglRenderBuffer_t * cur = rBuffers + i;
@@ -1290,15 +1318,14 @@ void rglPrepareRendering(int texturing, int tilenum, int recth, int depth)
 //   if (curZBuffer)
 //     curZBuffer->chunkId = nbChunks;
 
-  if (nbChunks >= MAX_RENDER_CHUNKS - 1 || nbStrips >= MAX_STRIPS - 1000 || nbVtxs >= 6 * MAX_STRIPS - 6000)
+  if (nbChunks >= MAX_RENDER_CHUNKS || nbStrips >= MAX_STRIPS - 1000 || nbVtxs >= 6 * MAX_STRIPS - 6000)
   {
 	  fprintf(stderr,
 		  "ERROR: nbChunks: %d, nbStrips: %d, nbVtxs: %d\n",
 		  nbChunks, nbStrips, nbVtxs
 		  );
 
-	  old_vi_origin = ~0;
-	  rglUpdate();
+	  rglClearChunks();
   }
 
   curChunk = chunks + nbChunks++;

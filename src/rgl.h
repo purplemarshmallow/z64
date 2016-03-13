@@ -237,6 +237,7 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth);
 void rglRenderMode(rglRenderChunk_t & chunk);
 void rglBlender(rglRenderChunk_t & chunk);
 void rglClearCombiners();
+void rglClearRenderBuffers();
 void rglSetCombiner(rglRenderChunk_t & chunk, int format);
 void rglPrepareRendering(int texturing, int tilenum, int recth, int depth);
 rglRenderBuffer_t * rglSelectRenderBuffer(uint32_t addr, int width, int size, int format);
@@ -254,6 +255,7 @@ void rglTextureRectangle(rdpTexRect_t * rect, int flip);
 void rglFillRectangle(rdpRect_t * rect);
 void rglTriangle(uint32_t w1, uint32_t w2, int shade, int texture, int zbuffer,
                  uint32_t * rdp_cmd);
+void rglClearChunks();
 void rglRenderChunks();
 void rglDisplayFramebuffers();
 int rglT1Usage(rdpState_t & state);
