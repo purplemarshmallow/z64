@@ -1021,7 +1021,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
 	}
 }
 
-#if 1
+#if 0
 #define TEXTURE_PIPELINE(TEX, SSS, SST, NOBILINEAR)																					\
 do																																	\
 {																																	\
@@ -1074,12 +1074,11 @@ do																																	\
 	}																																\
 }																																	\
 while(0)
-#endif
 
+#else
 // This is the implementation with 3-sample bilinear filtering, which should be more correct, but not yet working properly
 // TODO: check the correct texel samples and weighting values
 
-#if 1
 #define TEXTURE_PIPELINE(TEX, SSS, SST, NOBILINEAR)																					\
 do																																	\
 {																																	\
