@@ -396,7 +396,9 @@ static void rdp_load_tlut(uint32_t w1, uint32_t w2)
   {
     case RDP_PIXEL_SIZE_16BIT:
     {
-      uint16_t *src = (uint16_t *)&rdram[(rdpTiAddress + (tile.tl >>2) * rdpTiWidth * 2 + ((tile.sl >>2) << rdpTiSize >> 1))/4];
+      size_t address = rdpTiAddress + (tile.tl >> 2) * rdpTiWidth * 2 + ((tile.sl >> 2) << rdpTiSize >> 1);
+
+	  uint16_t *src = (uint16_t *)&rdram[address / 4];
       uint16_t *dst = (uint16_t *)(rdpTmem + rdpTiles[tilenum].tmem);
 
 //       printf("loading TLUT from %x --> %x\n",
@@ -404,7 +406,12 @@ static void rdp_load_tlut(uint32_t w1, uint32_t w2)
 
       for (i=0; i < count; i++)
       {
-        dst[i*4] = src[i^1];
+//	TODO:	use correct RDRAM size
+//			use macro for range checks
+          if (address > 0x007FFFFF)
+              dst[i*4] = 0x00;
+          else
+              dst[i*4] = src[i^1];
       }
       break;
     }
