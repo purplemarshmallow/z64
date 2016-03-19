@@ -80,6 +80,10 @@ RSP_INFO rspinfo = {
 DWORD (*dorspcycles) ( DWORD Cycles );
 void (*initiatersp) ( RSP_INFO Rsp_Info, DWORD * CycleCount);
 
+#ifdef rsp
+#undef rsp
+/* fixes an unrelated macro re-definition over the one in "rsp.h" */
+#endif
 #define rsp tester_rsp
 RSP_REGS rsp __attribute__((aligned(16)));
 
