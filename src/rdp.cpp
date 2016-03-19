@@ -55,7 +55,7 @@ int rdp_dump;
 #endif
 
 #define MAXCMD                  0x100000
-#define CMD_OVERFLOW_RESERVE    32
+#define CMD_OVERFLOW_RESERVE    4096
 static uint32_t rdp_cmd_data[MAXCMD + CMD_OVERFLOW_RESERVE];
 static volatile int rdp_cmd_ptr = 0;
 static volatile int rdp_cmd_cur = 0;
