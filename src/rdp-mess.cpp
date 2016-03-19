@@ -25,30 +25,25 @@ inline void fatalerror(const char * err, ...)
 static FILE *rdp_exec;
 #endif
 
-/* defined in systems/n64.c */
-#define rdram ((UINT32*)gfx.RDRAM)
-//extern UINT32 *rdram;
-#define rsp_imem ((UINT32*)gfx.IMEM)
-//extern UINT32 *rsp_imem;
-#define rsp_dmem ((UINT32*)gfx.DMEM)
-//extern UINT32 *rsp_dmem;
-//extern void dp_full_sync(void);
+/*
+ * MAME:  defined in systems/n64.c
+ * zilmar plugins:  #define'd in "Gfx #1.3.h" (Disable the below lines.)
+ */
+#ifndef PLUGIN_TYPE_GFX
+extern UINT32 *rdram;
+extern UINT32 *rsp_imem;
+extern UINT32 *rsp_dmem;
+extern void dp_full_sync(void);
 
-#define vi_origin (*(UINT32*)gfx.VI_ORIGIN_REG)
-//extern UINT32 vi_origin;
-#define vi_width (*(UINT32*)gfx.VI_WIDTH_REG)
-//extern UINT32 vi_width;
-#define vi_control (*(UINT32*)gfx.VI_STATUS_REG)
-//extern UINT32 vi_control;
+extern UINT32 vi_origin;
+extern UINT32 vi_width;
+extern UINT32 vi_control;
 
-#define dp_start (*(UINT32*)gfx.DPC_START_REG)
-//extern UINT32 dp_start;
-#define dp_end (*(UINT32*)gfx.DPC_END_REG)
-//extern UINT32 dp_end;
-#define dp_current (*(UINT32*)gfx.DPC_CURRENT_REG)
-//extern UINT32 dp_current;
-#define dp_status (*(UINT32*)gfx.DPC_STATUS_REG)
-//extern UINT32 dp_status;
+extern UINT32 dp_start;
+extern UINT32 dp_end;
+extern UINT32 dp_current;
+extern UINT32 dp_status;
+#endif
 
 static UINT32 rdp_cmd_data[0x1000];
 static int rdp_cmd_ptr = 0;
@@ -1021,7 +1016,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
 	}
 }
 
-#if 1
+#if 0
 #define TEXTURE_PIPELINE(TEX, SSS, SST, NOBILINEAR)																					\
 do																																	\
 {																																	\
@@ -1074,12 +1069,11 @@ do																																	\
 	}																																\
 }																																	\
 while(0)
-#endif
 
+#else
 // This is the implementation with 3-sample bilinear filtering, which should be more correct, but not yet working properly
 // TODO: check the correct texel samples and weighting values
 
-#if 1
 #define TEXTURE_PIPELINE(TEX, SSS, SST, NOBILINEAR)																					\
 do																																	\
 {																																	\
