@@ -23,7 +23,7 @@
 #include "rgl.h"
 
 #include <stdio.h>
-#include <SDL/SDL.h>
+#include <SDL.h>
 #include <assert.h>
 
 int screen_width = 1024, screen_height = 768;
