@@ -394,26 +394,30 @@ static void rdp_load_tlut(uint32_t w1, uint32_t w2)
 
   switch (rdpTiSize)
   {
-    case RDP_PIXEL_SIZE_16BIT:
-    {
-      size_t address = rdpTiAddress + (tile.tl >> 2) * rdpTiWidth * 2 + ((tile.sl >> 2) << rdpTiSize >> 1);
+  case RDP_PIXEL_SIZE_16BIT:
+  {
+	  uint32_t srcstart = rdpTiAddress + (tile.tl >> 2) * rdpTiWidth * 2 + ((tile.sl >> 2) << rdpTiSize >> 1);
+	  uint32_t dststart = rdpTiles[tilenum].tmem;
 
-	  uint16_t *src = (uint16_t *)&rdram[address / 4];
-      uint16_t *dst = (uint16_t *)(rdpTmem + rdpTiles[tilenum].tmem);
+	  uint16_t *src = (uint16_t *)gfx.RDRAM;
+	  uint16_t *dst = (uint16_t *)rdpTmem;
 
 //       printf("loading TLUT from %x --> %x\n",
 //              tile.th * rdpTiWidth / 2 + (tile.sh << rdpTiSize >> 1)/4
 
-      for (i=0; i < count; i++)
-      {
+	  for (i = 0; i < count; i++)
+	  {
 //	TODO:	use correct RDRAM size
 //			use macro for range checks
-          if (address > 0x007FFFFF)
-              dst[i*4] = 0x00;
-          else
-              dst[i*4] = src[i^1];
-      }
-      break;
+		  uint32_t srcindex = srcstart + ((i ^ 1) * 2);
+		  uint32_t dstindex = dststart + (i * 8);
+
+		  if (srcindex > 0x007FFFFF)
+			  dst[dstindex/2] = 0x00;
+		  else
+			  dst[dstindex/2] = src[srcindex/2];
+	  }
+	  break;
     }
     default:	LOGERROR("RDP: load_tlut: size = %d\n", rdpTiSize);
   }
