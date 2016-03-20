@@ -469,34 +469,29 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
     width = 0x1000-tb*4;
   }
 
-  if (dxt != 0)
-	{
-		int j=0;
+    if (dxt == 0) {
+ // rglAssert(tb+width/4 <= 0x1000/4);
+        for (i = 0; i < width / 4; i++) {
+            tc[(tb+i)&0x3ff] = src[((tl * rdpTiWidth) / 4) + rdpTiAddress / 4 + sl + i];
+        }
+    } else {
+        int j = 0;
 
-    //rglAssert(tb+width/4 <= 0x1000/4);
+     // rglAssert(tb+width/4 <= 0x1000/4);
 
-    int swap = rdpTiles[tilenum].size == 3? 2 : 1;
+        int swap = rdpTiles[tilenum].size == 3? 2 : 1;
 
-		for (i=0; i < width / 4; i+=2)
-		{
-			int t = j >> 11;
+        for (i = 0; i < width / 4; i += 2) {
+            int t = j >> 11;
 
-      tc[(((tb+i) + 0)  ^ ((t & 1) ? swap : 0))&0x3ff] =
-        src[rdpTiAddress / 4 + ((tl * rdpTiWidth) / 4) + sl + i + 0];
-      tc[(((tb+i) + 1) ^ ((t & 1) ? swap : 0))&0x3ff] =
-        src[rdpTiAddress / 4 + ((tl * rdpTiWidth) / 4) + sl + i + 1];
-        
-			j += dxt;
-		}
-	}
-	else
-	{
-    //rglAssert(tb+width/4 <= 0x1000/4);
-		for (i=0; i < width / 4; i++)
-		{
-			tc[(tb+i)&0x3ff] = src[((tl * rdpTiWidth) / 4) + rdpTiAddress / 4 + sl + i];
-		}
-	}
+            tc[(((tb + i) + 0) ^ ((t & 1) ? swap : 0)) & 0x3FF] =
+                src[rdpTiAddress / 4 + ((tl * rdpTiWidth) / 4) + sl + i + 0];
+            tc[(((tb + i) + 1) ^ ((t & 1) ? swap : 0)) & 0x3FF] =
+                src[rdpTiAddress / 4 + ((tl * rdpTiWidth) / 4) + sl + i + 1];
+
+            j += dxt;
+        }
+    }
 }
 
 static void rdp_load_tile(uint32_t w1, uint32_t w2)
