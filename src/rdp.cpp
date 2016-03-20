@@ -487,6 +487,13 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
             const size_t swap_mask = (t & 1) ? swap : 0;
 
             src_base = rdpTiAddress/4 + (tl * rdpTiWidth)/4 + sl + i;
+            if (src_base + 1 > 0x007FFFFF / sizeof(src[0])) {
+                fprintf(stderr,
+                    "ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n",
+                    src_base + 1 /* (If + 0 exceeds it, then so does + 1.) */
+                );
+                return; /* Fix me:  Was the address corrupt or intended? */
+            } /* If it was intended, remove this error to do a real fix. */
 
             tc[((tb + i + 0) ^ swap_mask) & 0x3FF] = src[src_base + 0];
             tc[((tb + i + 1) ^ swap_mask) & 0x3FF] = src[src_base + 1];
