@@ -1038,7 +1038,7 @@ void rglDisplayFramebuffers()
   glClear(GL_COLOR_BUFFER_BIT); // TODO clear a minimal area
 
   rglRenderBuffer_t * buffer;
-  CIRCLEQ_FOREACH(rglRenderBuffer_t, buffer, &rBufferHead, link)
+  CIRCLEQ_FOREACH_REVERSE (rglRenderBuffer_t, buffer, &rBufferHead, link)
     if (!(buffer->flags & RGL_RB_ERASED) &&
 		(uint32_t)vi_stop > buffer->addressStart &&
 		(uint32_t)vi_start < buffer->addressStop) {
