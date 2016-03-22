@@ -319,7 +319,7 @@ static void rdp_sync_full(uint32_t w1, uint32_t w2)
 {
   //printf("full sync\n");
   rglFullSync();
-  rglUpdate();
+  rglClearChunks();
 
   if (rglSettings.async)
     rdpSignalFullSync();

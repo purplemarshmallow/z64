@@ -1117,8 +1117,6 @@ void rglUpdate()
          vi_origin, *gfx.VI_H_START_REG, *gfx.VI_V_START_REG);
 
   glPolygonMode(GL_FRONT_AND_BACK, wireframe? GL_LINE : GL_FILL);
-
-  rglRenderChunks(nbChunks);
   
   rglDisplayFramebuffers();
 
@@ -1178,19 +1176,6 @@ void rglUpdate()
 #ifdef RDP_DEBUG
   rdpTracePos = 0;
 #endif
-
-  renderedChunks = 0;
-  nbChunks = 0;
-  nbStrips = 0;
-  nbVtxs =   0;
- 
-  for (i=0; i<nbRBuffers; i++) {
-    rglRenderBuffer_t & buffer = rBuffers[i];
-    buffer.area.xl = buffer.area.yl = 0;
-    buffer.area.xh = buffer.area.yh = 8192;
-    buffer.chunkId = 0;
-    buffer.nbDepthSections = 0;
-  }  
 
   // force a render buffer update
   rdpChanged |= (RDP_BITS_ZB_SETTINGS | RDP_BITS_FB_SETTINGS);
