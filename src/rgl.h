@@ -48,7 +48,8 @@ extern PFNGLACTIVETEXTUREPROC xglActiveTexture;
 extern PFNGLMULTITEXCOORD2FPROC xglMultiTexCoord2f;
 
 #ifdef RDP_DEBUG
-#include <IL/il.h>
+//not used anywhere?
+//#include "IL/il.h"
 #endif
 
 #include "glshader.h"

@@ -129,7 +129,11 @@ EXPORT void CALL GetDllInfo ( PLUGIN_INFO * PluginInfo )
 {
   PluginInfo->Version = 0x0103;
   PluginInfo->Type  = PLUGIN_TYPE_GFX;
-  sprintf (PluginInfo->Name, "z64gl");
+#ifdef RDP_DEBUG
+  sprintf (PluginInfo->Name, "z64gl Debug");
+#else
+  sprintf(PluginInfo->Name, "z64gl");
+#endif
   
   // If DLL supports memory these memory options then set them to TRUE or FALSE
   //  if it does not support it

@@ -145,13 +145,15 @@ char * rglCombiner2String(rdpState_t & state)
 #include "rgl_glut.h"
 
 #include <SDL.h>
-#include <IL/il.h>
+
+//not used anywhere?
+//#include "IL/il.h"
 #include <assert.h>
 
-#include <FTGLTextureFont.h>
+#include "FTGL/ftgl.h"
 
-#define FONT "LucidaTypewriterRegular.ttf"
-#define SMALLFONT "LucidaTypewriterRegular.ttf"
+#define FONT "arial.ttf"
+#define SMALLFONT "arial.ttf"
 //#define SMALLFONT "/usr/share/fonts/corefonts/arial.ttf"
 #define FS 12
 #define SMALLFS 12
@@ -417,9 +419,9 @@ void rglDisplayChunkInfo(rglRenderChunk_t & chunk)
     rglStrip_t & strip = chunk.strips[chunkindex >= 0? stripindex:0];
 
     int i;
+	int oldx = x;
     for (i=0; i<strip.nbVtxs; i++) {
       rglVertex_t vtx = strip.vtxs[i];
-      int oldx;
       gglPrintf(x, y, "%g %g %g %g", vtx.x, vtx.y, vtx.z, vtx.w);
       x += 256;
       if (strip.flags & RGL_STRIP_SHADE) {
@@ -614,17 +616,16 @@ void rglDebugger()
 
   fbindex = 0;
   chunkindex = -1;
-
   void rglInitDebugger();
   rglInitDebugger();
 
   rglShowCursor(SDL_ENABLE);
 
-  glActiveTextureARB(GL_TEXTURE1_ARB);
+  xglActiveTexture(GL_TEXTURE1_ARB);
   glDisable(GL_TEXTURE_2D);
-  glActiveTextureARB(GL_TEXTURE2_ARB);
+  xglActiveTexture(GL_TEXTURE2_ARB);
   glDisable(GL_TEXTURE_2D);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
+  xglActiveTexture(GL_TEXTURE0_ARB);
   glDrawBuffer(GL_BACK);
   
   for (i=nblines=0; i<=rdpTracePos; i += rdp_dasm(rdpTraceBuf, i, i+256, dasm)/4, nblines++)
@@ -722,13 +723,13 @@ void rglDebugger()
 
     //rglRenderChunks();
 
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	xglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
     glDrawBuffer(GL_BACK);
     glDisable(GL_SCISSOR_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glActiveTextureARB(GL_TEXTURE1_ARB);
+	xglActiveTexture(GL_TEXTURE1_ARB);
     glDisable(GL_TEXTURE_2D);
-    glActiveTextureARB(GL_TEXTURE0_ARB);
+	xglActiveTexture(GL_TEXTURE0_ARB);
     glDisable(GL_ALPHA_TEST);
 
     glClearColor(0, 0, 0, 0);
@@ -765,7 +766,7 @@ void rglDebugger()
       glMatrixMode( GL_PROJECTION);
       glPushMatrix();
       glLoadIdentity();
-      gluOrtho2D(0, screen_width, 0, screen_height);
+	  glOrtho(0, screen_width, 0, screen_height, -1, 1);
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
       glLoadIdentity();
