@@ -1088,6 +1088,50 @@ void rglDisplayFramebuffers()
 void rglClearChunks()
 {
 	rglRenderChunks(nbChunks);
+	
+//   for (i=0; i<nbRBuffers; i++)
+//     rglFramebuffer2Rdram(rBuffers[i],
+//                          rBuffers[i].addressStart, rBuffers[i].addressStop);
+
+#ifdef RDP_DEBUG
+	if (rdp_dump) {
+		LOG("DUMP %d\n", rdp_dump);
+		rdp_dump--;
+	}
+#ifdef WIN32
+	if (GetAsyncKeyState('P') & 0x0001) {
+		rglDebugger();
+	}
+	if (GetAsyncKeyState('D') & 0x0001) {
+		rdp_dump = 2;
+	}
+	if (GetAsyncKeyState('W') & 0x0001) {
+		wireframe = !wireframe;
+	}
+#else
+	SDL_Event event;
+	while (nbChunks && SDL_PollEvent(&event)) {
+		switch (event.type) {
+		case SDL_KEYDOWN:
+			switch (event.key.keysym.sym) {
+			case 'd':
+				rdp_dump = 2;
+				break;
+			case 'w': {
+				wireframe = !wireframe;
+				break;
+			}
+			case 'p': {
+				rglDebugger();
+				break;
+			}
+			}
+			break;
+		}
+	}
+#endif
+	rdpTracePos = 0;
+#endif
 
 	renderedChunks = 0;
 	nbChunks = 0;
@@ -1128,54 +1172,6 @@ void rglUpdate()
   rglSwapBuffers();
   
   rglFrameCounter++;
-
-//   for (i=0; i<nbRBuffers; i++)
-//     rglFramebuffer2Rdram(rBuffers[i],
-//                          rBuffers[i].addressStart, rBuffers[i].addressStop);
-
-  
-#ifdef RDP_DEBUG
-  if (rdp_dump) {
-    LOG("DUMP %d\n", rdp_dump);
-    rdp_dump--;
-  }
-#ifdef WIN32
-  if (GetAsyncKeyState ('P') & 0x0001) {
-    rglDebugger();
-  }
-  if (GetAsyncKeyState ('D') & 0x0001) {
-    rdp_dump = 2;
-  }
-  if (GetAsyncKeyState ('W') & 0x0001) {
-    wireframe = !wireframe;
-  }
-#else
-  SDL_Event event;
-  while (nbChunks && SDL_PollEvent(&event)) {
-    switch (event.type) {
-      case SDL_KEYDOWN:
-        switch (event.key.keysym.sym) {
-          case 'd':
-            rdp_dump = 2;
-            break;
-          case 'w': {
-            wireframe = !wireframe;
-            break;
-          }
-          case 'p': {
-            rglDebugger();
-            break;
-          }
-        }
-        break;
-    }
-  }
-#endif
-#endif
-  
-#ifdef RDP_DEBUG
-  rdpTracePos = 0;
-#endif
 
   // force a render buffer update
   rdpChanged |= (RDP_BITS_ZB_SETTINGS | RDP_BITS_FB_SETTINGS);
