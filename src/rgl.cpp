@@ -639,12 +639,21 @@ void rglRenderChunks(int upto)
 //             overlap);
         // check if more than 10% of the buffer was erased
         if (rBuffers+j != &buffer &&
-            overlap > int(rBuffers[j].addressStop - rBuffers[j].addressStart)/10
+            overlap > int(rBuffers[j].addressStop - rBuffers[j].addressStart)/10 &&
+			!(rBuffers[j].flags & RGL_RB_ERASED)
 //             rBuffers[j].addressStop > buffer.addressStart &&
 //             rBuffers[j].addressStart < buffer.addressStop
                                         ) {
-          rBuffers[j].flags |= RGL_RB_ERASED;
-          DUMP("erasing fb #%d\n", j);
+			//copy old buffer to new one (example: Super Bowling)
+			int offset = buffer.addressStart - rBuffers[j].addressStart;
+			int x = (offset/2) % buffer.width;
+			int y = (offset/2) / buffer.width;
+			xglBindFramebuffer(GL_FRAMEBUFFER_EXT, rBuffers[j].fbid);
+			glBindTexture(GL_TEXTURE_2D, buffer.texid);
+			glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, buffer.fboWidth, buffer.fboHeight, 0);
+
+			rBuffers[j].flags |= RGL_RB_ERASED;
+			DUMP("erasing fb #%d\n", j);
         }
       }
 
