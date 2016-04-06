@@ -68,7 +68,7 @@ struct rglSettings_t {
   int threaded;
   int async;
   int noNpotFbos;
-  int lowres;
+  int factor;
 };
 
 extern rglSettings_t rglSettings;
@@ -110,7 +110,7 @@ struct rglRenderBuffer_t {
   int nbDepthSections;
 };
 #define RGL_RB_DEPTH   1
-#define RGL_RB_FULL    2
+//#define RGL_RB_FULL    2
 #define RGL_RB_ERASED  4
 #define RGL_RB_FBMOD   8 // the GL framebuffer was modified
 #define RGL_RB_RAMMOD 16 // the framebuffer was modified in rdram

@@ -400,25 +400,8 @@ void rglPrepareFramebuffer(rglRenderBuffer_t & buffer)
   
   buffer.addressStop = buffer.addressStart + buffer.line * ((buffer.area.yl >>2)+1);
 
-  if (rglSettings.lowres) {
-    buffer.realWidth = buffer.width;
-    buffer.realHeight = buffer.height;
-  } else {
-    if (buffer.width <= 128 || buffer.height <= 128) {
-      buffer.realWidth = buffer.width*4;
-      buffer.realHeight = buffer.height*4;
-      buffer.flags &= ~RGL_RB_FULL;
-    } else {
-      buffer.realWidth = screen_width * buffer.width / rglScreenWidth;
-      buffer.realHeight = screen_height * buffer.height / rglScreenHeight;
-//     buffer.realWidth = screen_width * buffer.width / vi_width;
-//     if (buffer.height > 250)
-//       buffer.realHeight = screen_height * buffer.height / 480;
-//     else
-//       buffer.realHeight = screen_height * buffer.height / 240;
-      buffer.flags |= RGL_RB_FULL;
-    }
-  }
+  buffer.realWidth = buffer.width * rglSettings.factor;
+  buffer.realHeight = buffer.height * rglSettings.factor;
 
   if (rglSettings.noNpotFbos) {
     w = 1; h = 1;
@@ -645,12 +628,18 @@ void rglRenderChunks(int upto)
 //             rBuffers[j].addressStart < buffer.addressStop
                                         ) {
 			//copy old buffer to new one (example: Super Bowling)
-			int offset = buffer.addressStart - rBuffers[j].addressStart;
-			int x = (offset/2) % buffer.width;
-			int y = (offset/2) / buffer.width;
-			xglBindFramebuffer(GL_FRAMEBUFFER_EXT, rBuffers[j].fbid);
-			glBindTexture(GL_TEXTURE_2D, buffer.texid);
-			glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, buffer.fboWidth, buffer.fboHeight, 0);
+			if (rBuffers[j].size == buffer.size) {
+				int offset = buffer.addressStart - rBuffers[j].addressStart;
+				if (buffer.size == RDP_PIXEL_SIZE_16BIT)
+					offset /= 2;
+				else if (buffer.size == RDP_PIXEL_SIZE_32BIT)
+					offset /= 4;
+				int x = (offset % buffer.width) * buffer.fboWidth / buffer.width;
+				int y = (offset / buffer.width) * buffer.fboHeight / buffer.height;
+				xglBindFramebuffer(GL_FRAMEBUFFER_EXT, rBuffers[j].fbid);
+				glBindTexture(GL_TEXTURE_2D, buffer.texid);
+				glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, buffer.fboWidth, buffer.fboHeight, 0);
+			}
 
 			rBuffers[j].flags |= RGL_RB_ERASED;
 			DUMP("erasing fb #%d\n", j);

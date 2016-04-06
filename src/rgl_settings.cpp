@@ -104,8 +104,8 @@ int rglReadSettings()
         rglSettings.async = value;
       else if (!strcmp(key, "no_npot_fbos"))
         rglSettings.noNpotFbos = value;
-      else if (!strcmp(key, "lowres"))
-        rglSettings.lowres = value;
+      else if (!strcmp(key, "resolution_factor"))
+        rglSettings.factor = value;
       else
         LOGERROR("Unknown config key '%s'\n", key);
     }
