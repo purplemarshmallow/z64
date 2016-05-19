@@ -638,7 +638,7 @@ void rglRenderChunks(int upto)
 				int y = (offset / buffer.width) * buffer.fboHeight / buffer.height;
 				xglBindFramebuffer(GL_FRAMEBUFFER_EXT, rBuffers[j].fbid);
 				glBindTexture(GL_TEXTURE_2D, buffer.texid);
-				glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, buffer.fboWidth, buffer.fboHeight, 0);
+				glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, x, y, buffer.fboWidth, buffer.fboHeight);
 			}
 
 			rBuffers[j].flags |= RGL_RB_ERASED;
