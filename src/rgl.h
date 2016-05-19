@@ -249,6 +249,7 @@ int rglInit();
 void rglClose();
 int rglOpenScreen();
 void rglCloseScreen();
+void rglRestoreSettings();
 int rglReadSettings();
 void rglUpdate();
 void rglFullSync();

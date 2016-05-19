@@ -103,11 +103,7 @@ int rglOpenScreen()
   }
 #endif
   
-  rglSettings.resX = rglSettings.fsResX = 640;
-  rglSettings.resY = rglSettings.fsResY = 480;
-  rglSettings.hiresFb = 1;
-  rglSettings.fbInfo = 1;
-  
+  rglRestoreSettings();
   rglReadSettings();
   
 	if (rglStatus == RGL_STATUS_WINDOWED) {

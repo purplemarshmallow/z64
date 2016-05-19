@@ -24,6 +24,15 @@
 
 char rgl_cwd[512];
 
+void rglRestoreSettings()
+{
+	rglSettings.resX = rglSettings.fsResX = 640;
+	rglSettings.resY = rglSettings.fsResY = 480;
+	rglSettings.hiresFb = 1;
+	rglSettings.fbInfo = 0;
+	rglSettings.factor = 2;
+}
+
 int rglReadSettings()
 {
   FILE * fp;
