@@ -1161,6 +1161,7 @@ void rglUpdate()
 
   glPolygonMode(GL_FRONT_AND_BACK, wireframe? GL_LINE : GL_FILL);
   
+  rglClearChunks();
   rglDisplayFramebuffers();
 
 #ifndef NOFBO
