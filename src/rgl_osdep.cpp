@@ -384,19 +384,13 @@ void rglWin32Windowed()
 
 EXPORT void CALL ChangeWindow (void)
 {
-  if (rglNextStatus == RGL_STATUS_CLOSED || rglStatus == RGL_STATUS_CLOSED)
-    return;
-  switch (rglStatus) {
-    case RGL_STATUS_WINDOWED:
+	b_fullscreen = !b_fullscreen;
+//  if (rglNextStatus == RGL_STATUS_CLOSED || rglStatus == RGL_STATUS_CLOSED)
+//    return;
+
+	if (b_fullscreen)
       rglNextStatus = RGL_STATUS_FULLSCREEN;
-      break;
-    case RGL_STATUS_FULLSCREEN:
+	else
       rglNextStatus = RGL_STATUS_WINDOWED;
-      break;
-  }
-//  wanted_fullscreen = !fullscreen;
-//   rglCloseScreen();
-//   fullscreen = !fullscreen;
-//   rglOpenScreen();
 }
 

@@ -226,6 +226,7 @@ extern rglShader_t * rglCopyDepthShader;
 #define RGL_COMB_TILE7      16
 
 extern volatile int rglStatus, rglNextStatus;
+extern bool b_fullscreen;
 #define RGL_STATUS_CLOSED     0
 #define RGL_STATUS_WINDOWED   1
 #define RGL_STATUS_FULLSCREEN 2

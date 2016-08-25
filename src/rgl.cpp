@@ -91,6 +91,7 @@ uint8_t rglTmpTex[1024*1024*4];
 uint8_t rglTmpTex2[1024*1024*4];
 
 volatile int rglStatus, rglNextStatus;
+bool b_fullscreen;
 
 static int wireframe;
 

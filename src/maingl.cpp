@@ -210,25 +210,24 @@ EXPORT void CALL RomClosed (void)
   } else
 #endif
   {
-    rglNextStatus = rglStatus = RGL_STATUS_CLOSED;
-    rglCloseScreen();
+    rglNextStatus = RGL_STATUS_CLOSED;
+	rglUpdateStatus();
   }
 }
 
 EXPORT void CALL RomOpen (void)
 {
+	if (!b_fullscreen)
+		rglNextStatus = RGL_STATUS_WINDOWED;
+	else
+		rglNextStatus = RGL_STATUS_FULLSCREEN;
 #ifdef THREADED
   if (rglSettings.threaded) {
     rdpCreateThread();
-    //while (rglStatus != RGL_STATUS_CLOSED);
-    rglNextStatus = RGL_STATUS_WINDOWED;
   }
   else
 #endif
-  {
-    rglNextStatus = rglStatus = RGL_STATUS_WINDOWED;
-    rglOpenScreen();
-  }
+	rglUpdateStatus();
 }
 
 EXPORT void CALL ShowCFB (void)
