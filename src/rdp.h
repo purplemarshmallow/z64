@@ -56,6 +56,11 @@
 #define RDP_CYCLE_TYPE_COPY			2
 #define RDP_CYCLE_TYPE_FILL			3
 
+#define ZMODE_OPAQUE			0
+#define ZMODE_INTERPENETRATING	1
+#define ZMODE_TRANSPARENT		2
+#define ZMODE_DECAL				3
+
 typedef uint32_t rdpColor_t;
 
 #define RDP_GETC32_R(c) ( ((c)>>24) & 0xff )

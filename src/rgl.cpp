@@ -557,7 +557,6 @@ void rglRenderChunks(int upto)
   //printf("vi_origin %x nbChunks %d\n", vi_origin, nbChunks);
   rglRenderBuffer_t * lastBuffer = 0;
   uint32_t lastDepthAddress = ~0;
-  float zb = 0.0f;
 
   DUMP("rendering chunks upto %d / %d\n", upto, nbChunks);
 
@@ -723,20 +722,6 @@ void rglRenderChunks(int upto)
       rglRenderMode(chunk);
     }
     rglAssert(glGetError() == GL_NO_ERROR);
-
-    if (RDP_GETOM_Z_MODE(chunk.rdpState.otherModes) & 1) {
-      switch(RDP_GETOM_Z_MODE(chunk.rdpState.otherModes)) {
-      case 3:
-        zb = 20;
-        break;
-      default:
-        zb = 4;
-        break;
-      }
-    } else {
-      zb = 0;
-    }
-    zb *= 16e-6f;
     
 #ifdef RGL_EXACT_BLEND
     glDisable(GL_BLEND);
@@ -881,12 +866,12 @@ void rglRenderChunks(int upto)
           float iw = strip.vtxs[k].w;
           if (iw > 1000) {
             glVertex4f(x/buffer.width, y/buffer.height,
-                       (strip.vtxs[k].z - 1.5f*zb)*strip.vtxs[k].w,
+                       strip.vtxs[k].z * strip.vtxs[k].w,
                        strip.vtxs[k].w);
           } else {
             iw = 1.0f/iw;
             glVertex4f(x/buffer.width, y/buffer.height,
-                       (strip.vtxs[k].z) / (iw + zb*0.35f),
+                       strip.vtxs[k].z / iw,
                        strip.vtxs[k].w);
           }
 //           glVertex4f(x/buffer.width, y/buffer.height,
@@ -1399,6 +1384,7 @@ int rglInit()
   glTranslatef(-0.5, -0.5, 0);
 
   glEnable(GL_DEPTH_TEST);
+  glPolygonOffset(-3.0f, -3.0f);
 
   rglClose();
 

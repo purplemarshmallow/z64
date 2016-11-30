@@ -26,36 +26,37 @@
 
 void rglRenderMode(rglRenderChunk_t & chunk)
 {
-  //int i;
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  if (RDP_GETOM_CYCLE_TYPE(chunk.rdpState.otherModes) < 2) {
-    glDepthMask(RDP_GETOM_Z_UPDATE_EN(chunk.rdpState.otherModes)? GL_TRUE:GL_FALSE);
-    if (RDP_GETOM_Z_COMPARE_EN(chunk.rdpState.otherModes))
-      glDepthFunc(GL_LESS);
-    else
-      glDepthFunc(GL_ALWAYS);
-  } else {
-    glDepthMask(GL_FALSE);
-    glDepthFunc(GL_ALWAYS);
-  }
-
-
-//   if (RDP_GETOM_Z_MODE(chunk.rdpState.otherModes) & 1) {
-//     glEnable( GL_POLYGON_OFFSET_FILL );
-//     switch(RDP_GETOM_Z_MODE(chunk.rdpState.otherModes)) {
-//       case 3:
-//         glPolygonOffset( -3, -300 );
-//         break;
-//       default:
-//         // FIXME tune this value
-//         //glPolygonOffset( -3.0f, -3.0f );
-//         glPolygonOffset( -3, -40 );
-//         break;
-//     }
-//     //glDepthMask(GL_FALSE);
-//   } else {
-//     glDisable( GL_POLYGON_OFFSET_FILL );
-//   }
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	if (RDP_GETOM_CYCLE_TYPE(chunk.rdpState.otherModes) <= 2) {
+		glDepthMask(RDP_GETOM_Z_UPDATE_EN(chunk.rdpState.otherModes) ? GL_TRUE : GL_FALSE);
+		if (RDP_GETOM_Z_COMPARE_EN(chunk.rdpState.otherModes))
+		{
+			switch (RDP_GETOM_Z_MODE(chunk.rdpState.otherModes)) {
+			case ZMODE_INTERPENETRATING:
+				glDisable(GL_POLYGON_OFFSET_FILL);
+				glDepthFunc(GL_LEQUAL);
+				break;
+			case ZMODE_OPAQUE:
+			case ZMODE_TRANSPARENT:
+				glDisable(GL_POLYGON_OFFSET_FILL);
+				glDepthFunc(GL_LESS);
+				break;
+			case ZMODE_DECAL:
+				glEnable(GL_POLYGON_OFFSET_FILL);
+				glDepthFunc(GL_LEQUAL);
+				break;
+			}
+		}
+		else {
+			glDisable(GL_POLYGON_OFFSET_FILL);
+			glDepthFunc(GL_ALWAYS);
+		}
+	}
+	else {
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glDepthMask(GL_FALSE);
+		glDepthFunc(GL_ALWAYS);
+	}
 }
 
 
