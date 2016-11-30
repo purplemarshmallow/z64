@@ -360,9 +360,9 @@ static void rdp_set_scissor(uint32_t w1, uint32_t w2)
 
 static void rdp_set_prim_depth(uint32_t w1, uint32_t w2)
 {
-  rdpChanged |= RDP_BITS_MISC;
-	rdpState.primitiveZ = (uint16_t)(w2 >> 16);
-	rdpState.primitiveDeltaZ = (uint16_t)(w1);
+	rdpChanged |= RDP_BITS_MISC;
+	rdpState.primitiveZ = (uint16_t)((w2 & (0x7fff << 16)) >> 16);
+	rdpState.primitiveDeltaZ = (uint16_t)(w2);
 }
 
 static void rdp_set_other_modes(uint32_t w1, uint32_t w2)

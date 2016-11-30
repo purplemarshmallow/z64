@@ -224,7 +224,7 @@ void rglFillRectangle(rdpRect_t * rect)
   if (RDP_GETOM_Z_SOURCE_SEL(rdpState.otherModes))
     z = rdpState.primitiveZ;
   else
-    z = 0xffff;
+    z = 0;
 //   if (dump)
 //     fprintf(stderr, "fillrect cycle %d\n", other_modes.cycle_type);
 
