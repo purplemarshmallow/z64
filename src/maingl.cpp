@@ -95,10 +95,6 @@ void rdpCreateThread()
 }
 #endif
 
-EXPORT void CALL CaptureScreen ( char * Directory )
-{
-}
-
 EXPORT void CALL CloseDLL (void)
 {
 }

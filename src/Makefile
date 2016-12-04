@@ -123,6 +123,7 @@ OBJECTS4 = \
 	rdp.$(O) \
 	glshader.$(O) \
 	disasm.$(O) \
+	capture.$(O) \
 	maingl.$(O)
 
 OBJECTS5 = \
