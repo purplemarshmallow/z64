@@ -159,6 +159,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="capture.cpp" />
     <ClCompile Include="disasm.cpp" />
     <ClCompile Include="glshader.cpp" />
     <ClCompile Include="maingl.cpp" />

@@ -95,8 +95,12 @@ void rdpCreateThread()
 }
 #endif
 
-EXPORT void CALL CaptureScreen ( char * Directory )
+bool bcapture = false;
+char * capture_dir;
+EXPORT void CALL CaptureScreen(char* Directory)
 {
+	capture_dir = Directory;
+	bcapture = true;
 }
 
 EXPORT void CALL CloseDLL (void)
@@ -254,5 +258,3 @@ EXPORT void CALL ViStatusChanged (void)
 EXPORT void CALL ViWidthChanged (void)
 {
 }
-
-
