@@ -9,6 +9,7 @@
 #include <windows.h>
 #endif
 #include <GL/gl.h>
+#include "GL/glext.h"
 
 static void
 le32_to_header(unsigned char * header, unsigned long value)
@@ -135,7 +136,7 @@ glCaptureScreen(const char* path)
     return;
 }
 
-EXPORT void CALL CaptureScreen(char* Directory)
+void capture(char* Directory)
 {
     static unsigned long screen_count; /* very basic file-naming convention */
     FILE* file_stream;
@@ -148,7 +149,7 @@ EXPORT void CALL CaptureScreen(char* Directory)
 
     problems_closing = 0;
     do { /* Loop possible BMP file names until we hit one that isn't in use. */
-        sprintf(full_path, "%s%08X.bmp", Directory, screen_count);
+        sprintf(full_path, "%s/%08X.bmp", Directory, screen_count);
         file_stream = fopen(full_path, "rb");
         if (file_stream != NULL)
             problems_closing += fclose(file_stream) ? 1 : 0;

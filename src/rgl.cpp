@@ -1155,8 +1155,12 @@ void rglUpdate()
   rglUseShader(0);
   glDrawBuffer(GL_BACK);
   rglSwapBuffers();
-  
   rglFrameCounter++;
+
+  if (bcapture) {
+	  capture(capture_dir);
+	  bcapture = false;
+  }
 
   // force a render buffer update
   rdpChanged |= (RDP_BITS_ZB_SETTINGS | RDP_BITS_FB_SETTINGS);
