@@ -137,7 +137,7 @@ glCaptureScreen(const char* path)
 }
 
 static const char* path_modes[] = {
-    "%s%08X.bmp", "%s/%08X.bmp"
+    "%s/%08X.bmp", "%s%08X.bmp"
 }; /* Because some emulators on Windows forgot to add a '/' at the end. :) */
 void capture(char* Directory)
 {
