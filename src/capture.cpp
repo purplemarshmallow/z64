@@ -136,20 +136,29 @@ glCaptureScreen(const char* path)
     return;
 }
 
+static const char* path_modes[] = {
+    "%s/%08X.bmp", "%s%08X.bmp"
+}; /* Because some emulators on Windows forgot to add a '/' at the end. :) */
 void capture(char* Directory)
 {
     static unsigned long screen_count; /* very basic file-naming convention */
     FILE* file_stream;
     char* full_path;
     int problems_closing;
+    const size_t path_length = strlen(Directory);
+    const char end_char = *(Directory + path_length - 1);
 
-    full_path = (char *)malloc(strlen(Directory) + sizeof("/FFFFFFFF.bmp"));
+    full_path = (char *)malloc(path_length + sizeof("/FFFFFFFF.bmp"));
     if (full_path == NULL)
         return;
 
     problems_closing = 0;
     do { /* Loop possible BMP file names until we hit one that isn't in use. */
-        sprintf(full_path, "%s/%08X.bmp", Directory, screen_count);
+        sprintf(
+            full_path,
+            path_modes[(end_char == '/' || end_char == '\\') ? 1 : 0],
+            Directory, screen_count
+        );
         file_stream = fopen(full_path, "rb");
         if (file_stream != NULL)
             problems_closing += fclose(file_stream) ? 1 : 0;
