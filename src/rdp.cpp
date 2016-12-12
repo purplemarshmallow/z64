@@ -457,6 +457,7 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
 	src = (uint32_t*)&rdram[0];
 	tc = (uint32_t*)rdpTmem;
 	tb = rdpTiles[tilenum].tmem/4;
+	size_t src_base;
 
   //printf("Load block to %x width %x\n", rdpTiles[tilenum].tmem, width);
 
@@ -471,7 +472,13 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
     if (dxt == 0) {
      // rglAssert(tb + width/4 <= 0x1000/4);
         for (i = 0; i < width / 4; i++) {
-            tc[(tb + i) & 0x3FF] = src[(tl * rdpTiWidth)/4 + rdpTiAddress/4 + sl + i];
+			src_base = (tl * rdpTiWidth) / 4 + rdpTiAddress / 4 + sl + i;
+			if (src_base >= rdram_in_bytes / sizeof(src[0])) {
+				fprintf(stderr,
+					"ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n", src_base);
+				return;
+			}
+			tc[(tb + i) & 0x3FF] = src[src_base];
         }
     } else {
         int j = 0;
@@ -481,7 +488,6 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
         int swap = (rdpTiles[tilenum].size == 3) ? 2 : 1;
 
         for (i = 0; i < width / 4; i += 2) {
-            size_t src_base;
             int t = j >> 11;
             const size_t swap_mask = (t & 1) ? swap : 0;
 
