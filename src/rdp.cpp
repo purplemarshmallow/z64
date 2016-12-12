@@ -39,6 +39,8 @@ int        rdpTiWidth;
 uint32_t   rdpTiAddress;
 rdpTile_t  rdpTiles[8];
 int        rdpTileSet;
+//TODO set correct number of bytes used by the emulator
+size_t     rdram_in_bytes = 0x800000;
 
 struct area_t {
   int start, stop;
@@ -406,12 +408,10 @@ static void rdp_load_tlut(uint32_t w1, uint32_t w2)
 
 	  for (i = 0; i < count; i++)
 	  {
-//	TODO:	use correct RDRAM size
-//			use macro for range checks
 		  uint32_t srcindex = srcstart + ((i ^ 1) * 2);
 		  uint32_t dstindex = dststart + (i * 8);
 
-		  if (srcindex > 0x007FFFFF)
+		  if (srcindex >= rdram_in_bytes)
 			  dst[dstindex/2] = 0x00;
 		  else
 			  dst[dstindex/2] = src[srcindex/2];
@@ -486,7 +486,7 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
             const size_t swap_mask = (t & 1) ? swap : 0;
 
             src_base = rdpTiAddress/4 + (tl * rdpTiWidth)/4 + sl + i;
-            if (src_base + 1 > 0x007FFFFF / sizeof(src[0])) {
+			if (src_base + 1 >= rdram_in_bytes / sizeof(src[0])) {
                 fprintf(stderr,
                     "ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n",
                     src_base + 1 /* (If + 0 exceeds it, then so does + 1.) */
@@ -865,7 +865,6 @@ int rdp_store_list(void)
 
   return sync;
 }
-
 
 int rdp_init()
 {
