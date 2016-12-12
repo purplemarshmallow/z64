@@ -524,6 +524,7 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 
 	width = (sh - sl) + 1;
 	height = (th - tl) + 1;
+	size_t src_base;
 
 //   printf("Load tile to %x line %x height %d\n",
 //          rdpTiles[tilenum].tmem,
@@ -556,7 +557,14 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 
 				for (i=0; i < width; i++)
 				{
-					tc[(((tline+i) ^ BYTE_ADDR_XOR) ^ ((j & 1) ? 4 : 0))&0xfff] = src[(rdpTiAddress + s++) ^ BYTE_ADDR_XOR];
+					src_base = (rdpTiAddress + s++) ^ BYTE_ADDR_XOR;
+					if (src_base >= rdram_in_bytes / sizeof(src[0]))
+					{
+						fprintf(stderr,
+							"ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n", src_base);
+						return;
+					}
+					tc[(((tline + i) ^ BYTE_ADDR_XOR) ^ ((j & 1) ? 4 : 0)) & 0xfff] = src[src_base];
 				}
 			}
 			break;
@@ -584,7 +592,14 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 
 				for (i=0; i < width; i++)
 				{
-					tc[(((tline+i) ^ WORD_ADDR_XOR) ^ ((j & 1) ? 2 : 0))&0x7ff] = src[(rdpTiAddress / 2 + s++) ^ WORD_ADDR_XOR];
+					src_base = (rdpTiAddress / 2 + s++) ^ WORD_ADDR_XOR;
+					if (src_base >= rdram_in_bytes / sizeof(src[0]))
+					{
+						fprintf(stderr,
+							"ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n", src_base);
+						return;
+					}
+					tc[(((tline + i) ^ WORD_ADDR_XOR) ^ ((j & 1) ? 2 : 0)) & 0x7ff] = src[src_base];
 				}
 			}
 			break;
@@ -611,7 +626,14 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 
 				for (i=0; i < width; i++)
 				{
-					tc[((tline+i) ^ ((j & 1) ? 2 : 0))&0x3ff] = src[(rdpTiAddress / 4 + s++)];
+					src_base = (rdpTiAddress / 4 + s++);
+					if (src_base >= rdram_in_bytes / sizeof(src[0]))
+					{
+						fprintf(stderr,
+							"ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n", src_base);
+						return;
+					}
+					tc[((tline + i) ^ ((j & 1) ? 2 : 0)) & 0x3ff] = src[src_base];
 				}
 			}
 			break;
