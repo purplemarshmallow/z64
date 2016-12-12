@@ -77,7 +77,7 @@ typedef signed int INT8;
 typedef unsigned int UINT8;
 #endif
 
-#if (SHORT_MIN <= -32768 && SHORT_MAX >= +32767)
+#if (SHRT_MIN <= -32768 && SHRT_MAX >= +32767)
 typedef signed short INT16;
 typedef unsigned short UINT16;
 #else
