@@ -39,6 +39,8 @@ int        rdpTiWidth;
 uint32_t   rdpTiAddress;
 rdpTile_t  rdpTiles[8];
 int        rdpTileSet;
+//TODO set correct number of bytes used by the emulator
+size_t     rdram_in_bytes = 0x800000;
 
 struct area_t {
   int start, stop;
@@ -406,12 +408,10 @@ static void rdp_load_tlut(uint32_t w1, uint32_t w2)
 
 	  for (i = 0; i < count; i++)
 	  {
-//	TODO:	use correct RDRAM size
-//			use macro for range checks
 		  uint32_t srcindex = srcstart + ((i ^ 1) * 2);
 		  uint32_t dstindex = dststart + (i * 8);
 
-		  if (srcindex > 0x007FFFFF)
+		  if (srcindex >= rdram_in_bytes)
 			  dst[dstindex/2] = 0x00;
 		  else
 			  dst[dstindex/2] = src[srcindex/2];
@@ -457,6 +457,7 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
 	src = (uint32_t*)&rdram[0];
 	tc = (uint32_t*)rdpTmem;
 	tb = rdpTiles[tilenum].tmem/4;
+	size_t src_base;
 
   //printf("Load block to %x width %x\n", rdpTiles[tilenum].tmem, width);
 
@@ -471,7 +472,13 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
     if (dxt == 0) {
      // rglAssert(tb + width/4 <= 0x1000/4);
         for (i = 0; i < width / 4; i++) {
-            tc[(tb + i) & 0x3FF] = src[(tl * rdpTiWidth)/4 + rdpTiAddress/4 + sl + i];
+			src_base = (tl * rdpTiWidth) / 4 + rdpTiAddress / 4 + sl + i;
+			if (src_base >= rdram_in_bytes / sizeof(src[0])) {
+				fprintf(stderr,
+					"ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n", src_base);
+				return;
+			}
+			tc[(tb + i) & 0x3FF] = src[src_base];
         }
     } else {
         int j = 0;
@@ -481,12 +488,11 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
         int swap = (rdpTiles[tilenum].size == 3) ? 2 : 1;
 
         for (i = 0; i < width / 4; i += 2) {
-            size_t src_base;
             int t = j >> 11;
             const size_t swap_mask = (t & 1) ? swap : 0;
 
             src_base = rdpTiAddress/4 + (tl * rdpTiWidth)/4 + sl + i;
-            if (src_base + 1 > 0x007FFFFF / sizeof(src[0])) {
+			if (src_base + 1 >= rdram_in_bytes / sizeof(src[0])) {
                 fprintf(stderr,
                     "ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n",
                     src_base + 1 /* (If + 0 exceeds it, then so does + 1.) */
@@ -518,6 +524,7 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 
 	width = (sh - sl) + 1;
 	height = (th - tl) + 1;
+	size_t src_base;
 
 //   printf("Load tile to %x line %x height %d\n",
 //          rdpTiles[tilenum].tmem,
@@ -550,7 +557,14 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 
 				for (i=0; i < width; i++)
 				{
-					tc[(((tline+i) ^ BYTE_ADDR_XOR) ^ ((j & 1) ? 4 : 0))&0xfff] = src[(rdpTiAddress + s++) ^ BYTE_ADDR_XOR];
+					src_base = (rdpTiAddress + s++) ^ BYTE_ADDR_XOR;
+					if (src_base >= rdram_in_bytes / sizeof(src[0]))
+					{
+						fprintf(stderr,
+							"ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n", src_base);
+						return;
+					}
+					tc[(((tline + i) ^ BYTE_ADDR_XOR) ^ ((j & 1) ? 4 : 0)) & 0xfff] = src[src_base];
 				}
 			}
 			break;
@@ -578,7 +592,14 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 
 				for (i=0; i < width; i++)
 				{
-					tc[(((tline+i) ^ WORD_ADDR_XOR) ^ ((j & 1) ? 2 : 0))&0x7ff] = src[(rdpTiAddress / 2 + s++) ^ WORD_ADDR_XOR];
+					src_base = (rdpTiAddress / 2 + s++) ^ WORD_ADDR_XOR;
+					if (src_base >= rdram_in_bytes / sizeof(src[0]))
+					{
+						fprintf(stderr,
+							"ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n", src_base);
+						return;
+					}
+					tc[(((tline + i) ^ WORD_ADDR_XOR) ^ ((j & 1) ? 2 : 0)) & 0x7ff] = src[src_base];
 				}
 			}
 			break;
@@ -605,7 +626,14 @@ static void rdp_load_tile(uint32_t w1, uint32_t w2)
 
 				for (i=0; i < width; i++)
 				{
-					tc[((tline+i) ^ ((j & 1) ? 2 : 0))&0x3ff] = src[(rdpTiAddress / 4 + s++)];
+					src_base = (rdpTiAddress / 4 + s++);
+					if (src_base >= rdram_in_bytes / sizeof(src[0]))
+					{
+						fprintf(stderr,
+							"ERROR:  Block load address 0x%lX exceeds 8 MB DRAM.\n", src_base);
+						return;
+					}
+					tc[((tline + i) ^ ((j & 1) ? 2 : 0)) & 0x3ff] = src[src_base];
 				}
 			}
 			break;
@@ -865,7 +893,6 @@ int rdp_store_list(void)
 
   return sync;
 }
-
 
 int rdp_init()
 {

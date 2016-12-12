@@ -220,6 +220,7 @@ extern int        rdpTiWidth;
 extern uint32_t   rdpTiAddress;
 extern rdpTile_t  rdpTiles[8];
 extern int        rdpTileSet;
+extern size_t     rdram_in_bytes;
 
 #define RDP_BITS_COMBINE_MODES (1<<0)
 #define RDP_BITS_OTHER_MODES   (1<<1)
