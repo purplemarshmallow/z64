@@ -9,7 +9,10 @@
 #include <windows.h>
 #endif
 #include <GL/gl.h>
-#include "GL/glext.h"
+
+#ifndef GL_BGR
+#define GL_BGR	0x80E0
+#endif // !GL_BGR
 
 static void
 le32_to_header(unsigned char * header, unsigned long value)
