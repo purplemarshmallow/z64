@@ -101,10 +101,10 @@ typedef signed long long INT64;
 typedef unsigned long long UINT64;
 #elif defined(_MSC_VER)
 typedef signed __int64 INT64;
-typedef unsigned __int64 INT64;
+typedef unsigned __int64 UINT64;
 #else
-typedef uint64_t UINT64;
 typedef int64_t INT64;
+typedef uint64_t UINT64;
 #endif
 
 #endif
