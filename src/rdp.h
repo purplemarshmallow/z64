@@ -21,7 +21,7 @@
 #ifndef _RDP_H_
 #define _RDP_H_
 
-#include <stdint.h>
+#include "z64.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

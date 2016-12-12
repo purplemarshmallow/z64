@@ -1,5 +1,8 @@
-#include <stdint.h>
+#ifndef _Z64_H_
+#define _Z64_H_
+
 #include <SDL.h>
+#include <limits.h>
 
 #define DACRATE_NTSC	(48681812)
 #define DACRATE_PAL	(49656530)
@@ -60,13 +63,48 @@
 extern SDL_Surface *sdl_Screen;
 extern int screen_width, screen_height;
 
-typedef uint64_t UINT64;
-typedef int64_t INT64;
-typedef uint32_t UINT32;
-typedef int32_t INT32;
-typedef uint16_t UINT16;
-typedef int16_t INT16;
-typedef uint8_t UINT8;
-typedef int8_t INT8;
 typedef unsigned int offs_t;
 
+/*
+ * fast fix to missing <stdint.h> report
+ * These defs are not really as universal as the cxd4/rcp/my_types.h ones.
+ */
+#if (SCHAR_MIN <= -128 && SCHAR_MAX >= +127)
+typedef signed char INT8;
+typedef unsigned char UINT8;
+#else
+typedef signed int INT8;
+typedef unsigned int UINT8;
+#endif
+
+#if (SHORT_MIN <= -32768 && SHORT_MAX >= +32767)
+typedef signed short INT16;
+typedef unsigned short UINT16;
+#else
+typedef signed int INT16;
+typedef unsigned int UINT16;
+#endif
+
+#if (INT_MIN <= -2147483648 && INT_MAX >= -2147483647)
+typedef signed int INT32;
+typedef unsigned int UINT32;
+#else
+typedef signed long INT32;
+typedef unsigned long UINT32;
+#endif
+
+#if (LONG_MAX >= 0x7FFFFFFFFFFFFFFF)
+typedef signed long INT64;
+typedef unsigned long UINT64;
+#elif defined(ULLONG_MAX)
+typedef signed long long INT64;
+typedef unsigned long long UINT64;
+#elif defined(_MSC_VER)
+typedef signed __int64 INT64;
+typedef unsigned __int64 INT64;
+#else
+typedef uint64_t UINT64;
+typedef int64_t INT64;
+#endif
+
+#endif
