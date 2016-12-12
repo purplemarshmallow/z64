@@ -85,7 +85,7 @@ typedef signed int INT16;
 typedef unsigned int UINT16;
 #endif
 
-#if (INT_MIN <= -2147483648 && INT_MAX >= -2147483647)
+#if (INT_MIN <= -2147483648 && INT_MAX >= +2147483647)
 typedef signed int INT32;
 typedef unsigned int UINT32;
 #else
