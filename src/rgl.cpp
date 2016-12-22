@@ -924,8 +924,6 @@ void rglRenderChunks(int upto)
 
 void rglDisplayFramebuffers()
 {
-  //int i;
-
   if (!(vi_control & 3))
     return;
 
@@ -935,68 +933,21 @@ void rglDisplayFramebuffers()
   nbFullSync = 0;
 #endif
   
-  int height = (vi_control & 0x40) ? 480 : 240;
-  int width = vi_width;
+  int width, height;
+  INT32 hdiff = (vi_h_start & 0x3ff) - ((vi_h_start >> 16) & 0x3ff);
+  if (hdiff <= 0)
+	  return;
+  width = ((vi_x_scale & 0xfff) * hdiff) / 0x400;
+  //INT32 invisiblewidth = vi_width - width;
+  INT32 vdiff = (vi_v_start & 0x3ff) - ((vi_v_start >> 16) & 0x3ff);
+  if (vdiff <= 0)
+	  return;
+  vdiff >>= 1;
+  height = ((vi_y_scale & 0xfff) * vdiff) / 0x400;
 
-  // from glide64
-  DWORD scale_x = *gfx.VI_X_SCALE_REG & 0xFFF;
-  if (!scale_x) return;
-  DWORD scale_y = *gfx.VI_Y_SCALE_REG & 0xFFF;
-  if (!scale_y) return;
-  
-  float fscale_x = (float)scale_x / 1024.0f;
-  float fscale_y = (float)scale_y / 1024.0f;
-  
-  DWORD dwHStartReg = *gfx.VI_H_START_REG;
-  DWORD dwVStartReg = *gfx.VI_V_START_REG;
-  
-  DWORD hstart = dwHStartReg >> 16;
-  DWORD hend = dwHStartReg & 0xFFFF;
-  
-  // dunno... but sometimes this happens
-  if (hend == hstart) {
-    LOG("fix hend\n");
-    hend = (int)(*gfx.VI_WIDTH_REG / fscale_x);
-  }
-
-  if (hstart > hend) {
-    DWORD tmp=hstart; hstart=hend; hend=tmp;
-    LOG("swap hstart hend\n");
-  }
-  
-  DWORD vstart = dwVStartReg >> 16;
-  DWORD vend = dwVStartReg & 0xFFFF;
-
-  if (vstart > vend) {
-    DWORD tmp=vstart; vstart=vend; vend=tmp;
-    LOG("swap vstart vend\n");
-  }
-  
-  //if (*gfx.VI_WIDTH_REG != 0x500)
-  if (*gfx.VI_WIDTH_REG < 0x400)
-    fscale_y /= 2.0f;
-  
-//   fscale_x *= screen_width / float(vi_width);
-//   fscale_y *= screen_height / height;
-  //glViewport(0*hstart*fscale_x, 0*vstart*fscale_y, (hend-hstart)*fscale_x, (vend-vstart)*fscale_y);
-  width = (hend-hstart)*fscale_x;
-  height = (vend-vstart)*fscale_y;
-  if (!width || !height) return;
-  static int oldw, oldh;
-  if (width == oldw && width > 200)
-    rglScreenWidth = width;
-  if (height == oldh && height > 200)
-    rglScreenHeight = height;
-  oldw = width;
-  oldh = height;
-  int vi_line = vi_width * 2;  // TODO take in account the format
+  int vi_line = width * 2;  // TODO take in account the format
   int vi_start = *gfx.VI_ORIGIN_REG;// - vi_line;
   int vi_stop = vi_start + height * vi_line;
-
-
-  if (*gfx.VI_WIDTH_REG >= 0x400)
-    vi_line /= 2;
-  
   DUMP("%x screen %x --> %x %d --> %d x %d --> %d scale %g x %g clip %g --> %g x %g --> %g %dx%d\n",
        vi_line,
        vi_start, vi_stop,
@@ -1005,7 +956,6 @@ void rglDisplayFramebuffers()
        hstart*fscale_x, hend*fscale_x, vstart*fscale_y, vend*fscale_y,
        width, height
   );
-
 
 #ifdef NOFBO
   return;
@@ -1042,8 +992,8 @@ void rglDisplayFramebuffers()
       glDisable(GL_TEXTURE_2D);
       xglActiveTexture(GL_TEXTURE0_ARB);
 
-	  float x = (int32_t(buffer->addressStart - vi_start) % int(vi_line)) / 2;
-	  float y = (int32_t(buffer->addressStart - vi_start) / int(vi_line));
+	  float x = float(int32_t(buffer->addressStart - vi_start) % int(vi_line)) / 2;
+	  float y = float(int32_t(buffer->addressStart - vi_start) / int(vi_line));
 	  DUMP("displaying fb %x %d x %d (%d x %d) at %g x %g\n", buffer->addressStart,
 		  buffer->width, buffer->height,
 		  buffer->realWidth, buffer->realHeight,
