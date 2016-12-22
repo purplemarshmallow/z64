@@ -1042,30 +1042,28 @@ void rglDisplayFramebuffers()
       glDisable(GL_TEXTURE_2D);
       xglActiveTexture(GL_TEXTURE0_ARB);
 
-      
-      
-      float x = (int32_t(buffer->addressStart - vi_start) % int(vi_line)) / 2;
-      float y = height - buffer->height - (int32_t(buffer->addressStart - vi_start) / int(vi_line));
-      //x=y=0;
-      DUMP("displaying fb %x %d x %d (%d x %d) at %g x %g\n", buffer->addressStart,
-           buffer->width, buffer->height,
-           buffer->realWidth, buffer->realHeight,
-           x, y);
-      y -= *gfx.VI_V_CURRENT_LINE_REG & 1; // prevent interlaced modes flickering
-      x = x / width;
-      y = y / height;
-      rglUseShader(rglCopyShader);
-      glBindTexture(GL_TEXTURE_2D, buffer->texid);
-      glEnable(GL_TEXTURE_2D);
-      glDisable(GL_DEPTH_TEST);
-      glDisable(GL_BLEND);
-      glColor4ub(255, 255, 255, 255);
-      glBegin(GL_TRIANGLE_STRIP);
-      glTexCoord2f(float(buffer->realWidth)/buffer->fboWidth, float(buffer->realHeight)/buffer->fboHeight);    glVertex2f(x+float(buffer->width-1)/(width-1), y+0);
-      glTexCoord2f(0, float(buffer->realHeight)/buffer->fboHeight);    glVertex2f(x+0, y+0);
-      glTexCoord2f(float(buffer->realWidth)/buffer->fboWidth, 0);    glVertex2f(x+float(buffer->width-1)/(width-1), y+float(buffer->height-1)/(height-1));
-      glTexCoord2f(0, 0);    glVertex2f(x+0, y+float(buffer->height-1)/(height-1));
-      glEnd();
+	  float x = (int32_t(buffer->addressStart - vi_start) % int(vi_line)) / 2;
+	  float y = (int32_t(buffer->addressStart - vi_start) / int(vi_line));
+	  DUMP("displaying fb %x %d x %d (%d x %d) at %g x %g\n", buffer->addressStart,
+		  buffer->width, buffer->height,
+		  buffer->realWidth, buffer->realHeight,
+		  x, y);
+	  y += *gfx.VI_V_CURRENT_LINE_REG & 1; // prevent interlaced modes flickering
+	  x = x / width;
+	  y = y / height;
+
+	  rglUseShader(rglCopyShader);
+	  glBindTexture(GL_TEXTURE_2D, buffer->texid);
+	  glEnable(GL_TEXTURE_2D);
+	  glDisable(GL_DEPTH_TEST);
+	  glDisable(GL_BLEND);
+	  glColor4ub(255, 255, 255, 255);
+	  glBegin(GL_TRIANGLE_STRIP);
+	  glTexCoord2f(float(buffer->realWidth) / buffer->fboWidth, float(buffer->realHeight) / buffer->fboHeight);    glVertex2f(1 + x, y);
+	  glTexCoord2f(0, float(buffer->realHeight) / buffer->fboHeight);                                              glVertex2f(x, y);
+	  glTexCoord2f(float(buffer->realWidth) / buffer->fboWidth, 0);                                                glVertex2f(1 + x, 1 + y);
+	  glTexCoord2f(0, 0);                                                                                          glVertex2f(x, y + 1);
+	  glEnd();
     }
 }
 
