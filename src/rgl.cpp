@@ -948,14 +948,6 @@ void rglDisplayFramebuffers()
   int vi_line = width * 2;  // TODO take in account the format
   int vi_start = *gfx.VI_ORIGIN_REG;// - vi_line;
   int vi_stop = vi_start + height * vi_line;
-  DUMP("%x screen %x --> %x %d --> %d x %d --> %d scale %g x %g clip %g --> %g x %g --> %g %dx%d\n",
-       vi_line,
-       vi_start, vi_stop,
-       hstart, hend, vstart, vend,
-       fscale_x, fscale_y,
-       hstart*fscale_x, hend*fscale_x, vstart*fscale_y, vend*fscale_y,
-       width, height
-  );
 
 #ifdef NOFBO
   return;
