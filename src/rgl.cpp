@@ -932,20 +932,27 @@ void rglDisplayFramebuffers()
   LOG("nbFyllSync %d\n", nbFullSync);
   nbFullSync = 0;
 #endif
-  
-  int width, height;
-  INT32 hdiff = (vi_h_start & 0x3ff) - ((vi_h_start >> 16) & 0x3ff);
+  int scale_x = *gfx.VI_X_SCALE_REG & 0xFFF;
+  if (!scale_x) return;
+  int scale_y = *gfx.VI_Y_SCALE_REG & 0xFFF;
+  if (!scale_y) return;
+  float fscale_x = (float)scale_x / 1024.0f;
+  float fscale_y = (float)scale_y / 1024.0f;
+
+  int ispal = (vi_v_sync & 0x3ff) > 550;
+  int hend = vi_h_start & 0x3ff;
+  int hstart = (vi_h_start >> 16) & 0x3ff;
+  int hdiff = hend - hstart;
   if (hdiff <= 0)
 	  return;
-  width = ((vi_x_scale & 0xfff) * hdiff) / 0x400;
-  //INT32 invisiblewidth = vi_width - width;
+  int width = ((vi_x_scale & 0xfff) * hdiff) / 0x400;
   INT32 vdiff = (vi_v_start & 0x3ff) - ((vi_v_start >> 16) & 0x3ff);
   if (vdiff <= 0)
 	  return;
   vdiff >>= 1;
-  height = ((vi_y_scale & 0xfff) * vdiff) / 0x400;
+  int height = ((vi_y_scale & 0xfff) * vdiff) / 0x400;
 
-  int vi_line = width * 2;  // TODO take in account the format
+  int vi_line = vi_width * 2;  // TODO take in account the format
   int vi_start = *gfx.VI_ORIGIN_REG;// - vi_line;
   int vi_stop = vi_start + height * vi_line;
 
@@ -984,7 +991,9 @@ void rglDisplayFramebuffers()
       glDisable(GL_TEXTURE_2D);
       xglActiveTexture(GL_TEXTURE0_ARB);
 
-	  float x = float(int32_t(buffer->addressStart - vi_start) % int(vi_line)) / 2;
+	  //used in Top Gear Overdrive for menu transitions
+	  float x = (hstart - (ispal ? 128 : 108)) * fscale_x;
+	  //used in Beetle Adventure Racing for the film effect
 	  float y = float(int32_t(buffer->addressStart - vi_start) / int(vi_line));
 	  DUMP("displaying fb %x %d x %d (%d x %d) at %g x %g\n", buffer->addressStart,
 		  buffer->width, buffer->height,
