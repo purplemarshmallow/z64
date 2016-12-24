@@ -946,7 +946,9 @@ void rglDisplayFramebuffers()
   if (hdiff <= 0)
 	  return;
   int width = ((vi_x_scale & 0xfff) * hdiff) / 0x400;
-  INT32 vdiff = (vi_v_start & 0x3ff) - ((vi_v_start >> 16) & 0x3ff);
+  int vend = vi_v_start & 0x3ff;
+  int vstart = (vi_v_start >> 16) & 0x3ff;
+  int vdiff = vend - vstart;
   if (vdiff <= 0)
 	  return;
   vdiff >>= 1;
@@ -955,6 +957,25 @@ void rglDisplayFramebuffers()
   int vi_line = vi_width * 2;  // TODO take in account the format
   int vi_start = *gfx.VI_ORIGIN_REG;// - vi_line;
   int vi_stop = vi_start + height * vi_line;
+
+  float x0 = (hstart - (ispal ? 128 : 108)) * fscale_x;
+  float x1 = (hend - 640 - (ispal ? 128 : 108)) * fscale_x;
+  float xtotal = x0 + x1 + width;
+  float fullheight = (ispal ? 288 : 240) * fscale_y;
+  float y0 = (vstart - (ispal ? 47 : 37)) * fscale_y;
+  float y1 = fullheight - height;
+  float ytotal = fullheight + (y0 + y1) * 2;
+  x0 /= xtotal;    x1 /= xtotal;    y0 /= ytotal;    y1 /= ytotal;
+
+  //hack to prevent shaking
+  static float oldy0 = 0;
+  static float oldy1 = 0;
+  if (oldy0 - 0.03f < y0 && y0 < oldy0 + 0.03f)
+	  y0 = oldy0;
+  if (oldy1 - 0.03f < y1 && y1 < oldy1 + 0.03f)
+	  y1 = oldy1;
+  oldy0 = y0;
+  oldy1 = y1;
 
 #ifdef NOFBO
   return;
@@ -990,18 +1011,16 @@ void rglDisplayFramebuffers()
       xglActiveTexture(GL_TEXTURE1_ARB);
       glDisable(GL_TEXTURE_2D);
       xglActiveTexture(GL_TEXTURE0_ARB);
-
-	  //used in Top Gear Overdrive for menu transitions
-	  float x = (hstart - (ispal ? 128 : 108)) * fscale_x;
+	  
 	  //used in Beetle Adventure Racing for the film effect
 	  float y = float(int32_t(buffer->addressStart - vi_start) / int(vi_line));
-	  DUMP("displaying fb %x %d x %d (%d x %d) at %g x %g\n", buffer->addressStart,
+	  // prevent interlaced modes flickering
+	  y += *gfx.VI_V_CURRENT_LINE_REG & 1;
+	  y /= ytotal;
+
+	  DUMP("displaying fb %x %d x %d (%d x %d)\n", buffer->addressStart,
 		  buffer->width, buffer->height,
-		  buffer->realWidth, buffer->realHeight,
-		  x, y);
-	  y += *gfx.VI_V_CURRENT_LINE_REG & 1; // prevent interlaced modes flickering
-	  x = x / width;
-	  y = y / height;
+		  buffer->realWidth, buffer->realHeight);
 
 	  rglUseShader(rglCopyShader);
 	  glBindTexture(GL_TEXTURE_2D, buffer->texid);
@@ -1010,10 +1029,10 @@ void rglDisplayFramebuffers()
 	  glDisable(GL_BLEND);
 	  glColor4ub(255, 255, 255, 255);
 	  glBegin(GL_TRIANGLE_STRIP);
-	  glTexCoord2f(float(buffer->realWidth) / buffer->fboWidth, float(buffer->realHeight) / buffer->fboHeight);    glVertex2f(1 + x, y);
-	  glTexCoord2f(0, float(buffer->realHeight) / buffer->fboHeight);                                              glVertex2f(x, y);
-	  glTexCoord2f(float(buffer->realWidth) / buffer->fboWidth, 0);                                                glVertex2f(1 + x, 1 + y);
-	  glTexCoord2f(0, 0);                                                                                          glVertex2f(x, y + 1);
+	  glTexCoord2f(float(buffer->realWidth) / buffer->fboWidth, float(buffer->realHeight) / buffer->fboHeight);    glVertex2f(1 + x1, y + y0);
+	  glTexCoord2f(0, float(buffer->realHeight) / buffer->fboHeight);                                              glVertex2f(x0, y + y0);
+	  glTexCoord2f(float(buffer->realWidth) / buffer->fboWidth, 0);                                                glVertex2f(1 + x1, 1 + y - y1);
+	  glTexCoord2f(0, 0);                                                                                          glVertex2f(x0, 1 + y - y1);
 	  glEnd();
     }
 }
