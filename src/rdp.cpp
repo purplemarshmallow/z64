@@ -786,7 +786,7 @@ void rdp_process_list(void)
 
   // this causes problem with depth writeback in zelda mm
   // but is necessary for in fisherman
-  rglUpdate();
+  //rglUpdate();
 
 	while (rdp_cmd_cur != rdp_cmd_ptr)
 	{

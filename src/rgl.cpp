@@ -958,6 +958,7 @@ void rglDisplayFramebuffers()
   int vi_start = *gfx.VI_ORIGIN_REG;// - vi_line;
   int vi_stop = vi_start + height * vi_line;
 
+  int vactivelines = (vi_v_sync & 0x3ff) - (ispal ? 45 : 35);
   float x0 = (hstart - (ispal ? 128 : 108)) * fscale_x;
   float x1 = (hend - 640 - (ispal ? 128 : 108)) * fscale_x;
   float xtotal = x0 + x1 + width;
@@ -976,7 +977,7 @@ void rglDisplayFramebuffers()
 	  y1 = oldy1;
   oldy0 = y0;
   oldy1 = y1;
-
+  y0 = y1 = x0 = x1 = 0;
 #ifdef NOFBO
   return;
 #endif
@@ -991,11 +992,57 @@ void rglDisplayFramebuffers()
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glClear(GL_COLOR_BUFFER_BIT); // TODO clear a minimal area
 
+
+
+
+
+
+
+
+
   rglRenderBuffer_t * buffer;
   CIRCLEQ_FOREACH_REVERSE (rglRenderBuffer_t, buffer, &rBufferHead, link)
     if (!(buffer->flags & RGL_RB_ERASED) &&
 		(uint32_t)vi_stop > buffer->addressStart &&
 		(uint32_t)vi_start < buffer->addressStop) {
+
+
+
+
+		static bool createdvibuffer = false;
+		GLuint texid;
+		if (!createdvibuffer)
+		{
+
+
+			glGenTextures(1, &texid);
+			rglAssert(glGetError() == GL_NO_ERROR);
+			glBindTexture(GL_TEXTURE_2D, texid);
+			rglAssert(glGetError() == GL_NO_ERROR);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 640, 625, 0,
+				GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			rglAssert(glGetError() == GL_NO_ERROR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+			rglAssert(glGetError() == GL_NO_ERROR);
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+
+			glClearColor(0, 0, 0, 1);
+			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+			glClear(GL_COLOR_BUFFER_BIT);
+			rglAssert(glGetError() == GL_NO_ERROR);
+
+			//createdvibuffer = true;
+
+		}
+
+				xglBindFramebuffer(GL_FRAMEBUFFER_EXT, buffer->fbid);
+				glBindTexture(GL_TEXTURE_2D, texid);
+				glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, 640, 625*2-hend - vstart + (ispal ? 47 : 37)*2);
 
         xglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
       glDrawBuffer(GL_BACK);
@@ -1017,13 +1064,14 @@ void rglDisplayFramebuffers()
 	  // prevent interlaced modes flickering
 	  y += *gfx.VI_V_CURRENT_LINE_REG & 1;
 	  y /= ytotal;
+	  y = 0;
 
 	  DUMP("displaying fb %x %d x %d (%d x %d)\n", buffer->addressStart,
 		  buffer->width, buffer->height,
 		  buffer->realWidth, buffer->realHeight);
 
 	  rglUseShader(rglCopyShader);
-	  glBindTexture(GL_TEXTURE_2D, buffer->texid);
+	  glBindTexture(GL_TEXTURE_2D, texid);
 	  glEnable(GL_TEXTURE_2D);
 	  glDisable(GL_DEPTH_TEST);
 	  glDisable(GL_BLEND);
@@ -1034,7 +1082,17 @@ void rglDisplayFramebuffers()
 	  glTexCoord2f(float(buffer->realWidth) / buffer->fboWidth, 0);                                                glVertex2f(1 + x1, 1 + y - y1);
 	  glTexCoord2f(0, 0);                                                                                          glVertex2f(x0, 1 + y - y1);
 	  glEnd();
+
+
+	  //return;
+
+	  if (texid) {
+		  glDeleteTextures(1, &texid);
+		  texid = 0;
+	  }
     }
+
+
 }
 
 void rglClearChunks()
@@ -1103,10 +1161,10 @@ void rglUpdate()
 {
   int i;
   
-  if (old_vi_origin == vi_origin) {
+  //if (old_vi_origin == vi_origin) {
     //printf("same\n");
-    return;
-  }
+   // return;
+  //}
   old_vi_origin = vi_origin;
 
   DUMP("updating vi_origin %x vi_hstart %d vi_vstart %d\n",
