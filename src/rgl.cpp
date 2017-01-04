@@ -1376,8 +1376,7 @@ EXPORT void CALL FBWrite(DWORD addr, DWORD size)
     return;
   //LOG("FBWrite %x\n", addr);
   rglRenderBuffer_t * buffer;
-  if (addr >= rdram_in_bytes)
-	  return;
+  addr &= 0x7fffff;
   CIRCLEQ_FOREACH(rglRenderBuffer_t, buffer, &rBufferHead, link) {
     if (addr >= buffer->addressStart && addr+size <= buffer->addressStop) {
       //LOG("FBWrite in fb #%d\n", buffer - rBuffers);
@@ -1401,8 +1400,7 @@ EXPORT void CALL FBRead(DWORD addr)
     return;
   //LOG("FBRead %x\n", addr);
   rglRenderBuffer_t * buffer;
-  if (addr >= rdram_in_bytes)
-	  return;
+  addr &= 0x7fffff;
   CIRCLEQ_FOREACH(rglRenderBuffer_t, buffer, &rBufferHead, link) {
     if (addr >= buffer->addressStart && addr < buffer->addressStop) {
 //       LOG("writing to rdram buffer %x --> %x\n",
