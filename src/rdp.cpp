@@ -463,7 +463,7 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
   //printf("Load block to %x width %x\n", rdpTiles[tilenum].tmem, width);
 
   MarkTmemArea(rdpTiles[tilenum].tmem, rdpTiles[tilenum].tmem + width,
-               tl * rdpTiWidth*4 + rdpTiAddress + sl*4, 0, ~0, ~0);
+	  tl * tiwinwords * 4 + rdpTiAddress + sl * 4, 0, ~0, ~0);
 
   if (tb+width/4 > 0x1000/4) {
     LOG("load_block : fixup too large width\n", width, 0x1000-tb*4);
