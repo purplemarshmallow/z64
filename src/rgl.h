@@ -274,7 +274,7 @@ float rglZscale(uint16_t z);
 extern int screen_width, screen_height;
 
 extern void check();
-
+extern bool no_dlists;
 extern bool bcapture;
 extern char * capture_dir;
 void capture(char* Directory);

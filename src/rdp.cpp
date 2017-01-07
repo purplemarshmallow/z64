@@ -776,7 +776,7 @@ void rdp_process_list(void)
 {
 	//int i;
 	uint32_t cmd;//, length, cmd_length;
-
+	no_dlists = false;
   rglUpdateStatus();
   if (!rglSettings.threaded)
     rdp_store_list();
