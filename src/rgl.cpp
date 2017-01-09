@@ -932,7 +932,30 @@ void rglDisplayCFB()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	rglAssert(glGetError() == GL_NO_ERROR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, vi_width / 2, ((vi_width >> 2) * 3), 0, GL_RGBA, GL_UNSIGNED_BYTE, &gfx.RDRAM[vi_origin]);
+
+	int width = vi_width;
+	int height = ((vi_width >> 2) * 3);
+	int r, g, b, a, index, color;
+	UINT16 * src = (UINT16*)&gfx.RDRAM[vi_origin];
+	UINT32 * dst = (UINT32*)malloc(width * height * 4);
+	int bound = (rdram_in_bytes - vi_origin) >> 1;
+
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			index = (x + (y - 1) * width) ^ 1;
+			if (index >= bound)
+				break;
+			color = src[index];
+			r = ((color >> 11)&31)<<3;
+			g = ((color >> 6)&31)<<3;
+			b = ((color >> 1)&31)<<3;
+			a = (color&1) > 0 && (r|g|b) > 0 ? 0xff : 0U;
+			dst[x + y*width] = (a << 24) | (b << 16) | (g << 8) | r;
+		}
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dst);
 
 	rglUseShader(rglCopyShader);
 	glBindTexture(GL_TEXTURE_2D, texid);
@@ -951,6 +974,7 @@ void rglDisplayCFB()
 		glDeleteTextures(1, &texid);
 		texid = 0;
 	}
+	free(dst);
 }
 
 void rglDisplayFramebuffers()
