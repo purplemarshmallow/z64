@@ -221,6 +221,7 @@ EXPORT void CALL RomClosed (void)
 
 EXPORT void CALL RomOpen (void)
 {
+	no_dlists = true;
 	if (!b_fullscreen)
 		rglNextStatus = RGL_STATUS_WINDOWED;
 	else
@@ -236,6 +237,7 @@ EXPORT void CALL RomOpen (void)
 
 EXPORT void CALL ShowCFB (void)
 {
+	no_dlists = true;
 }
 
 EXPORT void CALL UpdateScreen (void)

@@ -128,7 +128,7 @@ int nbRenderModes;
 
 rglShader_t * rglCopyShader;
 rglShader_t * rglCopyDepthShader;
-
+bool no_dlists = true;
 int rglScreenWidth = 320, rglScreenHeight = 240;
 
 #define CHECK_FRAMEBUFFER_STATUS() \
@@ -922,6 +922,90 @@ void rglRenderChunks(int upto)
   renderedChunks = i;
 }
 
+void rglDisplayCFB()
+{
+	int visize = vi_control & 3;
+	int width = vi_width;
+	int height = ((vi_width >> 2) * 3);
+	UINT32 r, g, b, a, index;
+	UINT32 * dst = nullptr;
+	UINT8 * image = gfx.RDRAM + vi_origin;
+
+	if (visize == 2)
+	{
+		UINT16 * src = (UINT16*)image;
+		dst = (UINT32*)malloc(width * height * 4);
+		int bound = (rdram_in_bytes - vi_origin) >> 1;
+		UINT16 color;
+		for (int y = 0; y < height; y++)
+		{
+			for (int x = 0; x < width; x++)
+			{
+				index = (x + (y - 1) * width) ^ 1;
+				if (index >= bound)
+					break;
+				color = src[index];
+				r = ((color >> 11) & 31) << 3;
+				g = ((color >> 6) & 31) << 3;
+				b = ((color >> 1) & 31) << 3;
+				a = (color & 1) > 0 && (r | g | b) > 0 ? 0xff : 0U;
+				dst[x + y*width] = (a << 24) | (b << 16) | (g << 8) | r;
+			}
+		}
+	}
+	else if (visize == 3)
+	{
+		UINT32 * src = (UINT32*)image;
+		dst = (UINT32*)malloc(width * height * 4);
+		int bound = (rdram_in_bytes - vi_origin) >> 2;
+		UINT32 color;
+		for (int y = 0; y < height; y++)
+		{
+			for (int x = 0; x < width; x++)
+			{
+				index = (x + (y - 1) * width);
+				if (index >= bound)
+					break;
+				color = src[index];
+				r = (color >> 24) & 0xff;
+				g = (color >> 16) & 0xff;
+				b = (color >> 8) & 0xff;
+				a = (r | g | b) > 0 ? color & 0xff : 0U;
+				dst[x + y*width] = (a << 24) | (b << 16) | (g << 8) | r;
+			}
+		}
+	}
+	else
+		return;
+
+	GLuint texid;
+	glGenTextures(1, &texid);
+	glBindTexture(GL_TEXTURE_2D, texid);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dst);
+	rglUseShader(rglCopyShader);
+	glBindTexture(GL_TEXTURE_2D, texid);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glColor4ub(255, 255, 255, 255);
+	glBegin(GL_TRIANGLE_STRIP);
+	glTexCoord2f(1, 1);    glVertex2f(1, 0);
+	glTexCoord2f(0, 1);    glVertex2f(0, 0);
+	glTexCoord2f(1, 0);    glVertex2f(1, 1);
+	glTexCoord2f(0, 0);    glVertex2f(0, 1);
+	glEnd();
+	if (texid) {
+		glDeleteTextures(1, &texid);
+		texid = 0;
+	}
+	rglAssert(glGetError() == GL_NO_ERROR);
+	free(dst);
+}
+
 void rglDisplayFramebuffers()
 {
   if (!(vi_control & 3))
@@ -1088,8 +1172,12 @@ void rglUpdate()
 
   glPolygonMode(GL_FRONT_AND_BACK, wireframe? GL_LINE : GL_FILL);
   
-  rglClearChunks();
-  rglDisplayFramebuffers();
+  if (no_dlists)
+	  rglDisplayCFB();
+  else {
+	  rglClearChunks();
+	  rglDisplayFramebuffers();
+  }
 
 #ifndef NOFBO
     xglBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
