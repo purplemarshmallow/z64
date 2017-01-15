@@ -27,8 +27,8 @@ CC	= gcc
 CXX	= g++
 LD	= g++
 STRIP	= strip
-#CFLAGS	= -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O2 -mtune=athlon-xp -ffast-math -funroll-loops -m3dnow -mmmx -msse -msse2 #-mfpmath=sse #-fomit-frame-pointer
-CFLAGS	= -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O1 -ffast-math -m3dnow -mmmx -msse -msse2
+#CFLAGS	= -std=c++11 -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O2 -mtune=athlon-xp -ffast-math -funroll-loops -m3dnow -mmmx -msse -msse2 #-mfpmath=sse #-fomit-frame-pointer
+CFLAGS	= -std=c++11 -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O1 -ffast-math -m3dnow -mmmx -msse -msse2
 LDFLAGS	= -g -rdynamic -lGL -lGLU -L/usr/X11R6/lib `sdl-config --libs` -lz
 DLFLAGS = -shared -Wl,-Bsymbolic
 O	= o
@@ -79,9 +79,9 @@ else
 CC	= $(TOOL_PREFIX)gcc
 CXX	= $(TOOL_PREFIX)g++
 LD	= $(TOOL_PREFIX)g++
-#CFLAGS	= -g -mno-cygwin -DGCC -O2 -ffast-math -funroll-loops -mmmx -msse -msse2 -fomit-frame-pointer $(FTGL_INCS)
-CFLAGS	= -g -mno-cygwin -DGCC -O2 -ffast-math -funroll-loops -fomit-frame-pointer $(FTGL_INCS)
-#CFLAGS	= -mno-cygwin -DGCC -O2 $(FTGL_INCS) -g
+#CFLAGS	= -std=c++11 -g -mno-cygwin -DGCC -O2 -ffast-math -funroll-loops -mmmx -msse -msse2 -fomit-frame-pointer $(FTGL_INCS)
+CFLAGS	= -std=c++11 -g -mno-cygwin -DGCC -O2 -ffast-math -funroll-loops -fomit-frame-pointer $(FTGL_INCS)
+#CFLAGS	= -std=c++11 -mno-cygwin -DGCC -O2 $(FTGL_INCS) -g
 #CFLAGS	+= -O0 -g
 LDFLAGS	= -mno-cygwin $(FTGL_LIBS) -lole32 -luuid -lcomctl32 -lwinspool -lws2_32 -lwsock32 -lopengl32 -lglu32 -lglut32 -mno-cygwin -mwindows -mconsole # -lmingw32  -lSDLmain -lSDL
 SDL_LIB	= -lmingw32  -lSDLmain  /usr/mingw32/usr/lib/libSDL.a  -lwinmm # -lSDL
