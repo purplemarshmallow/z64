@@ -8,10 +8,17 @@ GTK_LIBS = `pkg-config gtk+-2.0 --libs`
 endif
 endif
 
+# 2017.01.15 cxd4 -- Don't confuse z64gl 64-bit builds with 32-bit /lib/ dir.
+ifeq ($(LBITS),64)
+LIB	= lib64
+else
+LIB	= lib
+endif
+
 GLUI_PREFIX	= /home/zig/Dev/gl/glui/src
 GLUT_PREFIX	= /home/zig/Dev/glui/glut-3.7/
-GLUI_LIBS	= $(GLUI_PREFIX)/lib/libglui.a -lglut
-#$(GLUT_PREFIX)/lib/glut/libglut.so.3.7 #-lglut
+GLUI_LIBS	= $(GLUI_PREFIX)/$(LIB)/libglui.a -lglut
+#$(GLUT_PREFIX)/$(LIB)/glut/libglut.so.3.7 #-lglut
 GLUI_INCS	= -I$(GLUI_PREFIX)/include
 
 ifneq ("$(WIN32)", "1")
@@ -29,7 +36,7 @@ LD	= g++
 STRIP	= strip
 #CFLAGS	= -std=c++11 -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O2 -mtune=athlon-xp -ffast-math -funroll-loops -m3dnow -mmmx -msse -msse2 #-mfpmath=sse #-fomit-frame-pointer
 CFLAGS	= -std=c++11 -g -DGCC -DUSE_GTK `sdl-config --cflags` $(GTK_FLAGS) -O1 -ffast-math -m3dnow -mmmx -msse -msse2
-LDFLAGS	= -g -rdynamic -lGL -lGLU -L/usr/X11R6/lib `sdl-config --libs` -lz
+LDFLAGS	= -g -rdynamic -lGL -lGLU -L/usr/X11R6/$(LIB) `sdl-config --libs` -lz
 DLFLAGS = -shared -Wl,-Bsymbolic
 O	= o
 COUT	= -c -o #
@@ -84,7 +91,7 @@ CFLAGS	= -std=c++11 -g -mno-cygwin -DGCC -O2 -ffast-math -funroll-loops -fomit-f
 #CFLAGS	= -std=c++11 -mno-cygwin -DGCC -O2 $(FTGL_INCS) -g
 #CFLAGS	+= -O0 -g
 LDFLAGS	= -mno-cygwin $(FTGL_LIBS) -lole32 -luuid -lcomctl32 -lwinspool -lws2_32 -lwsock32 -lopengl32 -lglu32 -lglut32 -mno-cygwin -mwindows -mconsole # -lmingw32  -lSDLmain -lSDL
-SDL_LIB	= -lmingw32  -lSDLmain  /usr/mingw32/usr/lib/libSDL.a  -lwinmm # -lSDL
+SDL_LIB	= -lmingw32  -lSDLmain  /usr/mingw32/usr/$(LIB)/libSDL.a  -lwinmm # -lSDL
 #SDL_LIB	= -lmingw32  -lSDLmain -lwinmm -lSDL
 DLFLAGS	= -shared
 O	= ow32
@@ -155,8 +162,8 @@ TARGET2	= z64-rsp.dll
 TARGET3 = tester.exe
 TARGET4 = z64gl.dll
 TARGET5 = zbench64.exe
-TARGET4LD = $(SDL_LIB) # /usr/mingw32/usr/lib/libSDL.a #-lSDL
-#TARGET5LD = /usr/mingw32/usr/lib/libSDL.a  -Dmain=SDL_main -lSDLmain -lmingw32 #-lSDL
+TARGET4LD = $(SDL_LIB) # /usr/mingw32/usr/$(LIB)/libSDL.a #-lSDL
+#TARGET5LD = /usr/mingw32/usr/$(LIB)/libSDL.a  -Dmain=SDL_main -lSDLmain -lmingw32 #-lSDL
 TARGET5LD = $(SDL_LIB)
 #CFLAGS	+=  -Dmain=SDL_main
 endif
