@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <zlib.h>
 
-char * dumpname = "rsp.dump.gz";
+char dumpname[256] = "rsp.dump.gz";
 int emutype = 0;
 
 BYTE _rdram[8*1024*1024];
@@ -166,7 +166,7 @@ int compar2(const void * pa, const void * pb)
 int main(int argc, char * * argv)
 {
   if (argc > 1)
-    dumpname = argv[1];
+    strcpy(dumpname, argv[1]);
   if (argc > 2)
     emutype = atoi(argv[2]);
   printf("testing '%s' emutype %d\n", dumpname, emutype);
