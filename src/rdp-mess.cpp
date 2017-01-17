@@ -741,9 +741,9 @@ static void fill_rectangle_16bit(RECTANGLE *rect)
 	int clipx1, clipx2, clipy1, clipy2;
 
 	UINT16 fill_colors[2] = {
-    (fill_color >>  0) & 0xffff,
-    (fill_color >> 16) & 0xffff,
-  };
+		(UINT16)((fill_color >>  0) & 0xFFFFu),
+		(UINT16)((fill_color >> 16) & 0xFFFFu),
+	};
 
 	// TODO: clip
 	clipx1 = clip.xh / 4;
