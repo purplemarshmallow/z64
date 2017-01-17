@@ -9,6 +9,7 @@ endif
 endif
 
 # 2017.01.15 cxd4 -- Don't confuse z64gl 64-bit builds with 32-bit /lib/ dir.
+LBITS := $(shell getconf LONG_BIT)
 ifeq ($(LBITS),64)
 LIB	= lib64
 else
