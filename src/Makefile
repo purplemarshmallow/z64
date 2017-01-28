@@ -1,13 +1,3 @@
-ifneq ("$(WIN32)", "1")
-ifneq ("$(shell grep GTK2 config.h)","\#define GTK2_SUPPORT 1")
-GTK_FLAGS = `gtk-config --cflags`
-GTK_LIBS = `gtk-config --libs`
-else
-GTK_FLAGS = `pkg-config gtk+-2.0 --cflags` -D_GTK2
-GTK_LIBS = `pkg-config gtk+-2.0 --libs`
-endif
-endif
-
 # 2017.01.15 cxd4 -- Don't confuse z64gl 64-bit builds with 32-bit /lib/ dir.
 LBITS := $(shell getconf LONG_BIT)
 ifeq ($(LBITS),64)
