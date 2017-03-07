@@ -1159,19 +1159,33 @@ void rglClearChunks()
 
 void rglUpdate()
 {
-  int i;
-  
-  if (old_vi_origin == vi_origin) {
-    //printf("same\n");
-    return;
-  }
-  old_vi_origin = vi_origin;
+	int i;
 
-  DUMP("updating vi_origin %x vi_hstart %d vi_vstart %d\n",
-         vi_origin, *gfx.VI_H_START_REG, *gfx.VI_V_START_REG);
+	if (old_vi_origin == vi_origin) {
+		//printf("same\n");
+		return;
+	}
+	old_vi_origin = vi_origin;
 
-  glPolygonMode(GL_FRONT_AND_BACK, wireframe? GL_LINE : GL_FILL);
-  
+	DUMP("updating vi_origin %x vi_hstart %d vi_vstart %d\n",
+		vi_origin, *gfx.VI_H_START_REG, *gfx.VI_V_START_REG);
+
+	glPolygonMode(GL_FRONT_AND_BACK, wireframe ? GL_LINE : GL_FILL);
+
+	for (i = nbRBuffers - 1; i >= 0; i--) {
+		int start = rBuffers[i].addressStart >> 2;
+		for (int j = 0; j < 4; ++j) {
+			if (rdram[start++] != fingerprint[j]) {
+				rBuffers[i].flags |= RGL_RB_RAMMOD;
+				break;
+			}
+			else
+			{
+				rBuffers[i].flags &= ~RGL_RB_RAMMOD;
+			}
+		}
+	}
+
   if (no_dlists)
 	  rglDisplayCFB();
   else {

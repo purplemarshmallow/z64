@@ -208,6 +208,7 @@ void rglTile(rdpTile_t & tile, rglTile_t & rtile, int recth)
       //while (0) {
       CIRCLEQ_FOREACH(rglRenderBuffer_t, buffer, &rBufferHead, link) {
         //if (buffer->flags & RGL_RB_DEPTH) continue;
+		  if (buffer->flags & RGL_RB_RAMMOD) continue;
         if (buffer->area.xh != 8192)
           buffer->addressStop = buffer->addressStart + buffer->line * ((buffer->area.yl >>2)+1);
 

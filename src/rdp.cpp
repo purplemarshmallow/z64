@@ -744,6 +744,11 @@ static void rdp_set_color_image(uint32_t w1, uint32_t w2)
 	rdpFbSize		= (w1 >> 19) & 0x3;
 	rdpFbWidth	= (w1 & 0x3ff) + 1;
 	rdpFbAddress	= w2 & 0x0ffffff;
+
+	int start = rdpFbAddress >> 2;
+	for (int i = 0; i < 4; ++i) {
+		rdram[start++] = fingerprint[i];
+	}
 }
 
 /*****************************************************************************/

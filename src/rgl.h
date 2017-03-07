@@ -59,6 +59,8 @@ extern PFNGLMULTITEXCOORD2FPROC xglMultiTexCoord2f;
 
 //#define RGL_USE_GLUT
 
+const int fingerprint[4] = { 2, 6, 4, 3 };
+
 struct rglSettings_t {
   int hiresFb;
   int resX, resY;
