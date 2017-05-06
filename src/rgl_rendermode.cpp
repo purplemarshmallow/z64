@@ -202,7 +202,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   };
 
   static const char *mA[] = {
-    "0/*LOD_FRACTION*/",		t1a,			t2a,			"p.a/*PRIM*/", 
+    "0.0/*LOD_FRACTION*/",		t1a,			t2a,			"p.a/*PRIM*/", 
     "gl_Color.a/*SHADE*/",			"e.a",		prim_lod_frac,	"0.0",
   };
 
