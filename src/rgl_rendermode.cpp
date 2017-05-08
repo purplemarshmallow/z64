@@ -179,7 +179,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
     "c",									t1,									t2,						"p/*PRIM*/", 
     "gl_Color/*SHADE*/",	"e",									"0.0/*SCALE*/",	"c.a/*COMBINED_A*/",
     "t1.a/*TEXEL0_A*/",		"t2.a/*TEXEL1_A*/",		"p.a/*PRIM_A*/",	"gl_Color.a/*SHADEA*/",
-    "e.a/*ENV_ALPHA*/",		"0/*LOD_FRACTION*/","0.5/*PRIM_LOD_FRAC*/",	"k5/*K5*/",
+    "e.a/*ENV_ALPHA*/",		"0.0/*LOD_FRACTION*/","0.5/*PRIM_LOD_FRAC*/",	"k5/*K5*/",
     "0.0",				"0.0",				"0.0",				"0.0",
     "0.0",				"0.0",				"0.0",				"0.0",
     "0.0",				"0.0",				"0.0",				"0.0",
