@@ -202,7 +202,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   };
 
   static const char *mA[] = {
-    "0/*LOD_FRACTION*/",		t1a,			t2a,			"p.a/*PRIM*/", 
+    "0.0/*LOD_FRACTION*/",		t1a,			t2a,			"p.a/*PRIM*/", 
     "gl_Color.a/*SHADE*/",			"e.a",		prim_lod_frac,	"0.0",
   };
 
@@ -402,51 +402,62 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
   }
 
 
-  p = src;
-  p +=
-    sprintf(p,
-            "uniform sampler2D texture0;       \n"
-            "uniform sampler2D texture2;       \n"
+    p  = src;
+    p += sprintf(p,
+        "uniform sampler2D texture0;\n"
+        "uniform sampler2D texture2;\n"
 #ifdef RGL_EXACT_BLEND
-            "uniform sampler2D texture1;       \n"
+        "uniform sampler2D texture1;\n"
 #endif
-            "                                  \n"
-            "void main()                       \n"
-            "{                                 \n"
-            "vec4  c = vec4(0,0,0,0);\n"
-            "vec4  e = gl_TextureEnvColor[0];\n"
-            "float k5 = gl_TextureEnvColor[1][0];\n"
-            "vec4  p = gl_LightSource[0].specular;\n"
+        "\n"
+        "void main()\n"
+        "{\n"
+        "    vec4   c = vec4(0, 0, 0, 0);\n"
+        "    vec4   e = gl_TextureEnvColor[0];\n"
+        "    float k5 = gl_TextureEnvColor[1][0];\n"
+        "    vec4   p = gl_LightSource[0].specular;\n"
 #ifdef RGL_EXACT_BLEND
-            "vec4  f = texture2D(texture1, vec2(gl_FragCoord.x/(2048.0*gl_TexCoord[1].x), gl_FragCoord.y/(2048.0*gl_TexCoord[1].y))); \n"
+        "    vec4   f = texture2D(\n"
+        "        texture1,\n"
+        "        vec2(\n"
+        "            gl_FragCoord.x / (2048.0 * gl_TexCoord[1].x),\n"
+        "            gl_FragCoord.y / (2048.0 * gl_TexCoord[1].y)\n"
+        "        )\n"
+        "    );\n"
 #endif
-            "vec4  fog = gl_LightSource[0].diffuse;    \n"
-            "vec4  b = gl_LightSource[0].ambient;  \n");
+        "    vec4 fog = gl_LightSource[0].diffuse;\n"
+        "    vec4   b = gl_LightSource[0].ambient;\n"
+    );
 
-  switch (format & RGL_COMB_IN0) {
+    switch (format & RGL_COMB_IN0) {
     case 0:
-      p +=
-        sprintf(p,
-                "vec4 t1 = texture2D(texture0, vec2(gl_TexCoord[0]));\n");
-      break;
+        p += sprintf(p,
+            "vec4  t1 = texture2D(texture0, vec2(gl_TexCoord[0]));\n"
+        );
+        break;
     case RGL_COMB_IN0_DEPTH:
-      p +=
-        sprintf(p,
-                "vec4 t1 = vec4(texture2D(texture0, vec2(gl_TexCoord[0]))[0]);\n");
-      break;
-  }
-  switch (format & RGL_COMB_IN1) {
+        p += sprintf(p,
+            "vec4  t1 = vec4(\n"
+            "    texture2D(texture0, vec2(gl_TexCoord[0]))[0]\n"
+            ");\n"
+        );
+        break;
+    }
+
+    switch (format & RGL_COMB_IN1) {
     case 0:
-      p +=
-        sprintf(p,
-                "vec4 t2 = texture2D(texture2, vec2(gl_TexCoord[2]));\n");
-      break;
+        p += sprintf(p,
+            "vec4  t2 = texture2D(texture2, vec2(gl_TexCoord[2]));\n"
+        );
+        break;
     case RGL_COMB_IN1_DEPTH:
-      p +=
-        sprintf(p,
-                "vec4 t2 = vec4(texture2D(texture2, vec2(gl_TexCoord[2]))[0]);\n");
-      break;
-  }
+        p += sprintf(p,
+            "vec4  t2 = vec4(\n"
+            "    texture2D(texture2, vec2(gl_TexCoord[2]))[0]\n"
+            ");\n"
+        );
+        break;
+    }
 
   const char * comb, * comb2;
   comb2 = 0;
@@ -465,7 +476,16 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
 //       comb = "c = vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s);\n";
 //       break;
 //   }
-  comb = "c = clamp(vec4((vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s), (%s - %s) * %s + %s), 0.0, 1.0);\n";
+    comb =
+        "c = clamp(\n"
+        "    vec4(\n"
+        "        (vec3(%s) - vec3(%s)) * vec3(%s) + vec3(%s),\n"
+        "        (%s - %s) * %s + %s\n"
+        "    ),\n"
+        "    0.0, 1.0\n"
+        ");\n"
+    ;
+
   strcpy(prim_lod_frac, "0.5/*PRIM_LOD_FRAC*/");
   strcpy(t1, "t1");
   strcpy(t1a, "t1.a");
@@ -476,18 +496,15 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
     strcpy(t2, "t2");
     strcpy(t2a, "t2.a");
   }
-  p +=
-    sprintf(p,
-            comb
-            ,
-            saRGB[RDP_GETCM_SUB_A_RGB0(state.combineModes)],
-            saRGB[RDP_GETCM_SUB_B_RGB0(state.combineModes)],
-            mRGB[RDP_GETCM_MUL_RGB0(state.combineModes)],
-            aRGB[RDP_GETCM_ADD_RGB0(state.combineModes)],
-            saA[RDP_GETCM_SUB_A_A0(state.combineModes)],
-            sbA[RDP_GETCM_SUB_B_A0(state.combineModes)],
-            mA[RDP_GETCM_MUL_A0(state.combineModes)],
-            aA[RDP_GETCM_ADD_A0(state.combineModes)]
+    p += sprintf(p, comb,
+        saRGB[RDP_GETCM_SUB_A_RGB0(state.combineModes)],
+        saRGB[RDP_GETCM_SUB_B_RGB0(state.combineModes)],
+        mRGB [RDP_GETCM_MUL_RGB0(state.combineModes)],
+        aRGB [RDP_GETCM_ADD_RGB0(state.combineModes)],
+        saA  [RDP_GETCM_SUB_A_A0(state.combineModes)],
+        sbA  [RDP_GETCM_SUB_B_A0(state.combineModes)],
+        mA   [RDP_GETCM_MUL_A0(state.combineModes)],
+        aA   [RDP_GETCM_ADD_A0(state.combineModes)]
     );
 
   if (cycle == RDP_CYCLE_TYPE_2) {
@@ -501,21 +518,18 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
 //     if (!RDP_GETOM_ALPHA_CVG_SELECT(chunk.rdpState.otherModes))
 //       p +=
 //         sprintf(p, "  c.a = t1.a; \n");
-    
-    p +=
-      sprintf(p,
-              comb2? comb2 : comb
-              ,
-              saRGB[RDP_GETCM_SUB_A_RGB1(state.combineModes)],
-              saRGB[RDP_GETCM_SUB_B_RGB1(state.combineModes)],
-              mRGB[RDP_GETCM_MUL_RGB1(state.combineModes)],
-              aRGB[RDP_GETCM_ADD_RGB1(state.combineModes)],
-              saA[RDP_GETCM_SUB_A_A1(state.combineModes)],
-              sbA[RDP_GETCM_SUB_B_A1(state.combineModes)],
-              mA[RDP_GETCM_MUL_A1(state.combineModes)],
-              aA[RDP_GETCM_ADD_A1(state.combineModes)]
-      );
-  }
+
+        p += sprintf(p, comb2 ? comb2 : comb,
+            saRGB[RDP_GETCM_SUB_A_RGB1(state.combineModes)],
+            saRGB[RDP_GETCM_SUB_B_RGB1(state.combineModes)],
+            mRGB [RDP_GETCM_MUL_RGB1(state.combineModes)],
+            aRGB [RDP_GETCM_ADD_RGB1(state.combineModes)],
+            saA  [RDP_GETCM_SUB_A_A1(state.combineModes)],
+            sbA  [RDP_GETCM_SUB_B_A1(state.combineModes)],
+            mA   [RDP_GETCM_MUL_A1(state.combineModes)],
+            aA   [RDP_GETCM_ADD_A1(state.combineModes)]
+        );
+    }
 
 //   if (!RDP_GETOM_CVG_TIMES_ALPHA(state.otherModes))
 //     p += sprintf(p, "c.a = t1.a; \n");
@@ -525,7 +539,7 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
 
   const char * blender;
   const char * noblender;
-  blender = "c = vec4(float(%s)*vec3(%s) + float(%s)*vec3(%s), 1.0); \n";
+  blender = "c = vec4(float(%s) * vec3(%s) + float(%s) * vec3(%s), 1.0);\n";
   noblender = "c.a = 1.0;\n";
 
   int m1b, m1a, m2b, m2a;
@@ -539,11 +553,9 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
           RDP_GETOM_BLEND_M2A_0(state.otherModes) != 1) {
 #endif
         sprintf(_1ma, "(1.0 - %s)", bA[0][RDP_GETOM_BLEND_M1B_0(state.otherModes)]);
-        p +=
-          sprintf(
-            p,
-            "c = vec4(float(%s)*vec3(%s) + float(%s)*vec3(%s), c.a); \n"
-            ,bA[0][RDP_GETOM_BLEND_M1B_0(state.otherModes)],
+        p += sprintf(p,
+            "c = vec4(float(%s) * vec3(%s) + float(%s) * vec3(%s), c.a);\n",
+            bA[0][RDP_GETOM_BLEND_M1B_0(state.otherModes)],
             bRGB[RDP_GETOM_BLEND_M1A_0(state.otherModes)],
             bA[1][RDP_GETOM_BLEND_M2B_0(state.otherModes)],
             bRGB[RDP_GETOM_BLEND_M2A_0(state.otherModes)]
@@ -608,12 +620,12 @@ void rglSetCombiner(rglRenderChunk_t & chunk, int format)
             LOGERROR(rglCombiner2String(state));
             break;
           case 2: // b
-            p += sprintf(
-              p, "c = vec4(vec3(b), %s); \n", alpha);
+            p += sprintf(p,
+              "c = vec4(vec3(b), %s);\n", alpha);
             break;
           case 3: // fog
-            p += sprintf(
-              p, "c = vec4(vec3(fog), %s); \n", alpha);
+            p += sprintf(p,
+              "c = vec4(vec3(fog), %s);\n", alpha);
             break;
         }
         switch (m2b) {
