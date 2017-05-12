@@ -126,72 +126,71 @@ inline uint32_t READ_RDP_DATA(uint32_t address)
 	}
 }
 
-static const int rdp_command_length[64] =
-{
-	8,			// 0x00, No Op
-	8,			// 0x01, ???
-	8,			// 0x02, ???
-	8,			// 0x03, ???
-	8,			// 0x04, ???
-	8,			// 0x05, ???
-	8,			// 0x06, ???
-	8,			// 0x07, ???
-	32,			// 0x08, Non-Shaded Triangle
-	32+16,		// 0x09, Non-Shaded, Z-Buffered Triangle
-	32+64,		// 0x0a, Textured Triangle
-	32+64+16,	// 0x0b, Textured, Z-Buffered Triangle
-	32+64,		// 0x0c, Shaded Triangle
-	32+64+16,	// 0x0d, Shaded, Z-Buffered Triangle
-	32+64+64,	// 0x0e, Shaded+Textured Triangle
-	32+64+64+16,// 0x0f, Shaded+Textured, Z-Buffered Triangle
-	8,			// 0x10, ???
-	8,			// 0x11, ???
-	8,			// 0x12, ???
-	8,			// 0x13, ???
-	8,			// 0x14, ???
-	8,			// 0x15, ???
-	8,			// 0x16, ???
-	8,			// 0x17, ???
-	8,			// 0x18, ???
-	8,			// 0x19, ???
-	8,			// 0x1a, ???
-	8,			// 0x1b, ???
-	8,			// 0x1c, ???
-	8,			// 0x1d, ???
-	8,			// 0x1e, ???
-	8,			// 0x1f, ???
-	8,			// 0x20, ???
-	8,			// 0x21, ???
-	8,			// 0x22, ???
-	8,			// 0x23, ???
-	16,			// 0x24, Texture_Rectangle
-	16,			// 0x25, Texture_Rectangle_Flip
-	8,			// 0x26, Sync_Load
-	8,			// 0x27, Sync_Pipe
-	8,			// 0x28, Sync_Tile
-	8,			// 0x29, Sync_Full
-	8,			// 0x2a, Set_Key_GB
-	8,			// 0x2b, Set_Key_R
-	8,			// 0x2c, Set_Convert
-	8,			// 0x2d, Set_Scissor
-	8,			// 0x2e, Set_Prim_Depth
-	8,			// 0x2f, Set_Other_Modes
-	8,			// 0x30, Load_TLUT
-	8,			// 0x31, ???
-	8,			// 0x32, Set_Tile_Size
-	8,			// 0x33, Load_Block
-	8,			// 0x34, Load_Tile
-	8,			// 0x35, Set_Tile
-	8,			// 0x36, Fill_Rectangle
-	8,			// 0x37, Set_Fill_Color
-	8,			// 0x38, Set_Fog_Color
-	8,			// 0x39, Set_Blend_Color
-	8,			// 0x3a, Set_Prim_Color
-	8,			// 0x3b, Set_Env_Color
-	8,			// 0x3c, Set_Combine
-	8,			// 0x3d, Set_Texture_Image
-	8,			// 0x3e, Set_Mask_Image
-	8			// 0x3f, Set_Color_Image
+static const int rdp_command_length[64] = {
+    8 / sizeof(int64_t),        // 0x00, No Op
+    8 / sizeof(int64_t),        // 0x01, ???
+    8 / sizeof(int64_t),        // 0x02, ???
+    8 / sizeof(int64_t),        // 0x03, ???
+    8 / sizeof(int64_t),        // 0x04, ???
+    8 / sizeof(int64_t),        // 0x05, ???
+    8 / sizeof(int64_t),        // 0x06, ???
+    8 / sizeof(int64_t),        // 0x07, ???
+    (32)/sizeof(int64_t),       // 0x08, Non-Shaded Triangle
+    (32 + 16)/sizeof(int64_t),  // 0x09, Non-Shaded, Z-Buffered Triangle
+    (32 + 64)/sizeof(int64_t),  // 0x0A, Textured Triangle
+    (32 + 64 + 16)/sizeof(int64_t),         // 0x0B, Textured, Z-Buffered Triangle
+    (32 + 64)/sizeof(int64_t),  // 0x0C, Shaded Triangle
+    (32 + 64 + 16)/sizeof(int64_t),         // 0x0D, Shaded, Z-Buffered Triangle
+    (32 + 64 + 64)/sizeof(int64_t),         // 0x0E, Shaded+Textured Triangle
+    (32 + 64 + 64 + 16)/sizeof(int64_t),    // 0x0F, Shaded+Textured, Z-Buffered Triangle
+    8 / sizeof(int64_t),        // 0x10, ???
+    8 / sizeof(int64_t),        // 0x11, ???
+    8 / sizeof(int64_t),        // 0x12, ???
+    8 / sizeof(int64_t),        // 0x13, ???
+    8 / sizeof(int64_t),        // 0x14, ???
+    8 / sizeof(int64_t),        // 0x15, ???
+    8 / sizeof(int64_t),        // 0x16, ???
+    8 / sizeof(int64_t),        // 0x17, ???
+    8 / sizeof(int64_t),        // 0x18, ???
+    8 / sizeof(int64_t),        // 0x19, ???
+    8 / sizeof(int64_t),        // 0x1A, ???
+    8 / sizeof(int64_t),        // 0x1B, ???
+    8 / sizeof(int64_t),        // 0x1C, ???
+    8 / sizeof(int64_t),        // 0x1D, ???
+    8 / sizeof(int64_t),        // 0x1E, ???
+    8 / sizeof(int64_t),        // 0x1F, ???
+    8 / sizeof(int64_t),        // 0x20, ???
+    8 / sizeof(int64_t),        // 0x21, ???
+    8 / sizeof(int64_t),        // 0x22, ???
+    8 / sizeof(int64_t),        // 0x23, ???
+    16 / sizeof(int64_t),       // 0x24, Texture_Rectangle
+    16 / sizeof(int64_t),       // 0x25, Texture_Rectangle_Flip
+    8 / sizeof(int64_t),        // 0x26, Sync_Load
+    8 / sizeof(int64_t),        // 0x27, Sync_Pipe
+    8 / sizeof(int64_t),        // 0x28, Sync_Tile
+    8 / sizeof(int64_t),        // 0x29, Sync_Full
+    8 / sizeof(int64_t),        // 0x2A, Set_Key_GB
+    8 / sizeof(int64_t),        // 0x2B, Set_Key_R
+    8 / sizeof(int64_t),        // 0x2C, Set_Convert
+    8 / sizeof(int64_t),        // 0x2D, Set_Scissor
+    8 / sizeof(int64_t),        // 0x2E, Set_Prim_Depth
+    8 / sizeof(int64_t),        // 0x2F, Set_Other_Modes
+    8 / sizeof(int64_t),        // 0x30, Load_TLUT
+    8 / sizeof(int64_t),        // 0x31, ???
+    8 / sizeof(int64_t),        // 0x32, Set_Tile_Size
+    8 / sizeof(int64_t),        // 0x33, Load_Block
+    8 / sizeof(int64_t),        // 0x34, Load_Tile
+    8 / sizeof(int64_t),        // 0x35, Set_Tile
+    8 / sizeof(int64_t),        // 0x36, Fill_Rectangle
+    8 / sizeof(int64_t),        // 0x37, Set_Fill_Color
+    8 / sizeof(int64_t),        // 0x38, Set_Fog_Color
+    8 / sizeof(int64_t),        // 0x39, Set_Blend_Color
+    8 / sizeof(int64_t),        // 0x3A, Set_Prim_Color
+    8 / sizeof(int64_t),        // 0x3B, Set_Env_Color
+    8 / sizeof(int64_t),        // 0x3C, Set_Combine
+    8 / sizeof(int64_t),        // 0x3D, Set_Texture_Image
+    8 / sizeof(int64_t),        // 0x3E, Set_Mask_Image
+    8 / sizeof(int64_t),        // 0x3F, Set_Color_Image
 };
 
 /*****************************************************************************/
@@ -801,9 +800,9 @@ void rdp_process_list(void)
 	//      LOGERROR("rdp_process_list: invalid rdp command %08X at %08X\n", rdp_cmd_data[rdp_cmd_cur], dp_start+(rdp_cmd_cur * 4));
 	//  }
 
-		if ((((rdp_cmd_ptr-rdp_cmd_cur)&(MAXCMD-1)) * 4) < rdp_command_length[cmd])
+		if ((((rdp_cmd_ptr-rdp_cmd_cur)&(MAXCMD-1)) * sizeof(int32_t)) < rdp_command_length[cmd] * sizeof(int64_t))
 		{
-// 			LOGERROR("rdp_process_list: not enough rdp command data: cur = %d, ptr = %d, expected = %d\n", rdp_cmd_cur, rdp_cmd_ptr, rdp_command_length[cmd]);
+// 			LOGERROR("rdp_process_list: not enough rdp command data: cur = %d, ptr = %d, expected = %d\n", rdp_cmd_cur, rdp_cmd_ptr, rdp_command_length[cmd] * sizeof(int64_t));
 // 			return;
       break;
 		}
@@ -813,21 +812,21 @@ void rdp_process_list(void)
 		{
 			char string[4000];
       int rdp_dasm(uint32_t * rdp_cmd_data, int rdp_cmd_cur, int length, char *buffer);
-			rdp_dasm(rdp_cmd_data, rdp_cmd_cur, rdp_command_length[cmd], string);
+			rdp_dasm(rdp_cmd_data, rdp_cmd_cur, rdp_command_length[cmd] * sizeof(int64_t), string);
 
 			fprintf(stderr, "%08X: %08X %08X   %s\n", dp_start+(rdp_cmd_cur * 4), rdp_cmd_data[rdp_cmd_cur+0], rdp_cmd_data[rdp_cmd_cur+1], string);
 		}
 #endif
 
 #ifdef RDP_DEBUG
-    memcpy(rdpTraceBuf+rdpTracePos, rdp_cmd_data+rdp_cmd_cur, rdp_command_length[cmd]);
+    memcpy(rdpTraceBuf+rdpTracePos, rdp_cmd_data+rdp_cmd_cur, sizeof(int64_t) * rdp_command_length[cmd]);
 #endif
 
-    if (rdp_cmd_cur + rdp_command_length[cmd]/4 > MAXCMD) {
+    if (rdp_cmd_cur + 2*rdp_command_length[cmd] > MAXCMD) {
         size_t copy_length;
         const size_t limit = CMD_OVERFLOW_RESERVE * sizeof(rdp_cmd_data[0]);
 
-        copy_length = rdp_command_length[cmd] - 4*(MAXCMD - rdp_cmd_cur);
+        copy_length = sizeof(int64_t)*rdp_command_length[cmd] - 4*(MAXCMD - rdp_cmd_cur);
         if (copy_length > limit) {
             fprintf(stderr,
                 "ERROR:  rdp_cmd_data[0x%X] overflow (%lu > %lu)\n",
@@ -842,11 +841,11 @@ void rdp_process_list(void)
 		rdp_command_table[cmd](rdp_cmd_data[rdp_cmd_cur+0], rdp_cmd_data[rdp_cmd_cur+1]);
 
 #ifdef RDP_DEBUG
-    rdpTracePos += rdp_command_length[cmd] / 4;
+    rdpTracePos += sizeof(int64_t) * rdp_command_length[cmd] / sizeof(int32_t);
     rglAssert(rdpTracePos < sizeof(rdpTraceBuf)/sizeof(rdpTraceBuf[0]));
 #endif
 
-		rdp_cmd_cur = (rdp_cmd_cur + rdp_command_length[cmd] / 4) & (MAXCMD-1);
+		rdp_cmd_cur = (rdp_cmd_cur + 2*rdp_command_length[cmd]) & (MAXCMD-1);
 	}
 
 // 	dp_current = dp_end;
@@ -886,7 +885,7 @@ int rdp_store_list(void)
         rdp_cmd_left--;
       } else {
         cmd = (data >> 24) & 0x3f;
-        rdp_cmd_left = rdp_command_length[cmd]/4-1;
+        rdp_cmd_left = 2*rdp_command_length[cmd] - 1;
         if (cmd == 0x29) // full_sync
           sync = 1;
       }
