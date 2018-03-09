@@ -111,14 +111,16 @@ OBJECTS = \
 
 OBJECTS4 = \
 	rgl.$(O) \
-	rgl_settings.$(O) \
 	rgl_tiles.$(O) \
 	rgl_rendermode.$(O) \
 	rgl_geometry.$(O) \
 	rgl_debugger.$(O) \
 	rgl_glut.$(O) \
-	rgl_osdep.$(O) \
+	rgl_zilmar.$(O) \
 	rdp.$(O) \
+	API_common.$(O) \
+	API_zilmar.$(O) \
+	config_zilmar.$(O) \
 	glshader.$(O) \
 	disasm.$(O) \
 	capture.$(O) \

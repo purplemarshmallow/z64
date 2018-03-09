@@ -1,5 +1,3 @@
-#include "Gfx #1.3.h"
-
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +5,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#endif
+#ifndef MUPEN64PLUS
+#include "Gfx #1.3.h"
 #endif
 #include <GL/gl.h>
 
@@ -23,8 +24,8 @@ le32_to_header(unsigned char * header, unsigned long value)
 #endif
     *(header + 3) = (unsigned char)((value >> 24) & 0xFFu);
     *(header + 2) = (unsigned char)((value >> 16) & 0xFFu);
-    *(header + 1) = (unsigned char)((value >>  8) & 0xFFu);
-    *(header + 0) = (unsigned char)((value >>  0) & 0xFFu);
+    *(header + 1) = (unsigned char)((value >> 8) & 0xFFu);
+    *(header + 0) = (unsigned char)((value >> 0) & 0xFFu);
 }
 
 static void
@@ -35,17 +36,17 @@ glGetScreenDimensions(GLsizei* width, GLsizei* height)
     *(width) = *(height) = 0; /* Or to be OCD, fetch the max dimensions. */
     glGetIntegerv(GL_VIEWPORT, &viewport[0]);
     if (viewport[2] > 0)
-        *(width)  = viewport[2];
+        *(width) = viewport[2];
     if (viewport[3] > 0)
         *(height) = viewport[3];
 }
 
 /*
- * Pack server-side video memory color components into client-side CPU pixel
- * storage of 8-bit-per-channel color component integers.
- *
- * The BMP image format is the only format directly co-aligning with this.
- */
+* Pack server-side video memory color components into client-side CPU pixel
+* storage of 8-bit-per-channel color component integers.
+*
+* The BMP image format is the only format directly co-aligning with this.
+*/
 static void
 glDownloadFramebuffer(
     GLubyte* pixel_table,
@@ -61,7 +62,7 @@ glDownloadFramebuffer(
     glGetIntegerv(GL_VIEWPORT, &viewport[0]);
     x = viewport[0];
     y = viewport[1];
-#ifdef _WIN32
+#if defined (_WIN32 ) && !defined(MUPEN64PLUS)
     if (gfx.hStatusBar != NULL)
         GetClientRect(gfx.hStatusBar, &screen_offset);
     x += screen_offset.left;
@@ -101,9 +102,9 @@ glCaptureScreen(const char* path)
     if (file_data == NULL)
         return; /* serv0r probably needs moar dedotated wam */
 
-    /* magic number for bit-mapped image files on any platform */
-    file_data[ 0] = 'B';
-    file_data[ 1] = 'M';
+    //magic number for bit-mapped image files on any platform
+    file_data[0] = 'B';
+    file_data[1] = 'M';
 
 #if 0
     file_data[14] = 12; /* smallest, universal minimalist BMP core header */
@@ -117,7 +118,7 @@ glCaptureScreen(const char* path)
 
     le32_to_header(&file_data[34], bytes_per_bitmap);
     bytes_per_bitmap += file_data[10];
-    le32_to_header(&file_data[ 2], bytes_per_bitmap);
+    le32_to_header(&file_data[2], bytes_per_bitmap);
     le32_to_header(&file_data[18], (GLuint)width);
     le32_to_header(&file_data[22], (GLuint)height);
 
@@ -133,7 +134,7 @@ glCaptureScreen(const char* path)
             "ERROR:  Should have written %lu bytes but only wrote %lu.\n",
             (unsigned long)bytes_per_bitmap, (unsigned long)elements_written
         )
-    ;
+        ;
     while (fclose(file_stream) != 0)
         ;
     return;

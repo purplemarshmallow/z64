@@ -25,19 +25,37 @@
     <ClCompile Include="rgl_glut.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rgl_osdep.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rgl_rendermode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="rgl_settings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="rgl_tiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="capture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="osal_dynamiclib_win32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="API_mupen64plus.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="API_zilmar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="config_mupen64plus.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="config_zilmar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rgl_mupen64plus.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rgl_zilmar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="API_common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
