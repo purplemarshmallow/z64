@@ -31,6 +31,7 @@ void rglRestoreSettings()
     rglSettings.hiresFb = 1;
     rglSettings.fbInfo = 0;
     rglSettings.factor = 2;
+    rglSettings.softgfx = 0;
 }
 
 int rglReadSettings()
@@ -116,6 +117,8 @@ int rglReadSettings()
                 rglSettings.noNpotFbos = value;
             else if (!strcmp(key, "resolution_factor"))
                 rglSettings.factor = value;
+            else if (!strcmp(key, "software_rendering"))
+                rglSettings.softgfx = value;
             else
                 LOGERROR("Unknown config key '%s'\n", key);
         }

@@ -58,6 +58,9 @@
     <ClCompile Include="API_common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rdp_software.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Gfx #1.3.h">

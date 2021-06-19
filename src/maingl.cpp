@@ -43,7 +43,7 @@ int rdpThreadFunc(void * dummy)
         if (rglNextStatus == RGL_STATUS_CLOSED)
             rglUpdateStatus();
         else
-            rdp_process_list();
+            rgl_process_list();
         if (!rglSettings.async)
             SDL_SemPost(rdpCommandCompleteSema);
 
@@ -66,7 +66,7 @@ void rdpWaitFullSync()
 
 void rdpPostCommand()
 {
-    int sync = rdp_store_list();
+    int sync = rgl_store_list();
     SDL_SemPost(rdpCommandSema);
     if (!rglSettings.async)
         SDL_SemWait(rdpCommandCompleteSema);

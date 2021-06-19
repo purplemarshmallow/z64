@@ -74,6 +74,7 @@ struct rglSettings_t {
     int noNpotFbos;
 	int factor;
     int fullscreen;
+    int softgfx;
 };
 
 extern rglSettings_t rglSettings;

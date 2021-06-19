@@ -37,15 +37,18 @@ extern "C" {
 #ifdef RGL_USE_GLUT
         rglGlutPostCommand(glut_rdp_process_list);
 #else
+        if (rglSettings.softgfx) {
+            rdp_process_list();
+        }
 #ifdef THREADED
-        if (rglSettings.threaded) {
+        else if (rglSettings.threaded) {
             rdpCreateThread();
             rdpPostCommand();
         }
         else
 #endif
         {
-            rdp_process_list();
+            rgl_process_list();
         }
 #endif
         return;

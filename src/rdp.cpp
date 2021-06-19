@@ -776,13 +776,13 @@ static void(*rdp_command_table[64])(uint32_t w1, uint32_t w2) =
     rdp_set_combine,	rdp_set_texture_image,	rdp_set_mask_image,		rdp_set_color_image
 };
 
-void rdp_process_list(void)
+void rgl_process_list(void)
 {
     uint32_t cmd;//, length, cmd_length;
     no_dlists = false;
     rglUpdateStatus();
     if (!rglSettings.threaded)
-        rdp_store_list();
+        rgl_store_list();
 
     if (rglStatus == RGL_STATUS_CLOSED)
         return;
@@ -847,14 +847,12 @@ void rdp_process_list(void)
         rdp_cmd_cur = (rdp_cmd_cur + rdp_command_length[cmd] / 4) & (MAXCMD - 1);
     }
 
-    // 	dp_current = dp_end;
-    // 	dp_start = dp_end;
     dp_start = dp_current;
 
     dp_status &= ~0x0002;
 }
 
-int rdp_store_list(void)
+int rgl_store_list(void)
 {
     uint32_t i;
     uint32_t data, cmd, length;
@@ -907,6 +905,7 @@ int rdp_init()
     rdpTracePos = 0;
 #endif
     nbTmemAreas = 0;
+    rdp_software_init();
     return rglInit();
 }
 

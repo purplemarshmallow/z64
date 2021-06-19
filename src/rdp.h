@@ -253,9 +253,11 @@ uint32_t rdpGetTmemOrigin(int tmem, int * line, int * stop, int * fromFormat, in
 void rdpCreateThread();
 void rdpPostCommand();
 int rdp_init();
+int rdp_software_init();
 int rdp_dasm(uint32_t * rdp_cmd_data, int rdp_cmd_cur, int length, char *buffer);
 void rdp_process_list(void);
-int rdp_store_list(void);
+void rgl_process_list(void);
+int rgl_store_list(void);
 
 #ifdef MUPEN64PLUS
 void rdp_log(m64p_msg_level level, const char *msg, ...);

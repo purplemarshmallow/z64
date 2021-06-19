@@ -70,6 +70,7 @@ int rglReadSettings()
     rglSettings.threaded = ConfigGetParamBool(videoZ64Section, "Threaded");
     rglSettings.async = ConfigGetParamBool(videoZ64Section, "Async");
     rglSettings.factor = 3;
+    rglSettings.softgfx = 0;
     rglSettings.noNpotFbos = ConfigGetParamBool(videoZ64Section, "NoNpotFbos");
 
     return true;
