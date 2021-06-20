@@ -79,19 +79,6 @@ typedef struct
 
 typedef struct
 {
-    int format, size;
-    UINT32 line;
-    UINT32 tmem;
-    int palette;
-    // TODO: clamp & mirror parameters
-    int ct, mt, cs, ms;
-    int mask_t, shift_t, mask_s, shift_s;
-
-    UINT16 sl, tl, sh, th;		// 10.2 fixed-point
-} TILE;
-
-typedef struct
-{
     int sub_a_rgb0;
     int sub_b_rgb0;
     int mul_rgb0;
@@ -227,17 +214,9 @@ static UINT32 fb_address;
 
 static UINT32 zb_address;
 
-static int ti_format;
-static int ti_size;
-static int ti_width;
-static UINT32 ti_address;
-
-static TILE tile[8];
-
 static RECTANGLE clip;
 
-static UINT8 texture_cache[0x100000]; // *texture_cache;
-static UINT32 tlut[256];
+#define tlut ((uint32_t *)(rdpTmem + 0x800))
 
 #define CLAMP(S, T)														\
 do																		\
@@ -282,8 +261,6 @@ int rdp_software_init()
 #if LOG_RDP_EXECUTION
     rdp_exec = fopen("rdp_execute.txt", "wt");
 #endif
-
-    //texture_cache = auto_malloc(0x100000);
 
     combiner_rgbsub_a_r[0] = combiner_rgbsub_a_r[1] = &one_color.r;
     combiner_rgbsub_a_g[0] = combiner_rgbsub_a_g[1] = &one_color.g;
@@ -844,7 +821,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         case 1: break;	// FIXME?: Extreme-G 2 does this
         case PIXEL_SIZE_16BIT:
         {
-            UINT16 *tc = (UINT16*)texture_cache;
+            UINT16 *tc = (UINT16*)rdpTmem;
             int taddr = ((tbase / 2) + ((t) * (twidth / 2)) + (s)) ^ ((t & 1) ? XOR_SWAP_WORD : 0);
             UINT16 c = tc[taddr ^ WORD_ADDR_XOR];
 
@@ -856,7 +833,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         }
         case PIXEL_SIZE_32BIT:
         {
-            UINT32 *tc = (UINT32*)texture_cache;
+            UINT32 *tc = (UINT32*)rdpTmem;
             int taddr = ((tbase / 4) + ((t) * (twidth / 2)) + (s)) ^ ((t & 1) ? XOR_SWAP_DWORD : 0);
             UINT32 c = tc[taddr];
 
@@ -876,7 +853,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         {
         case PIXEL_SIZE_4BIT:
         {
-            UINT8 *tc = (UINT8*)texture_cache;
+            UINT8 *tc = (UINT8*)rdpTmem;
             int taddr = (tbase + ((t)* twidth) + ((s) / 2)) ^ ((t & 1) ? XOR_SWAP_BYTE : 0);
             UINT8 p = ((s) & 1) ? (tc[taddr ^ BYTE_ADDR_XOR] & 0xf) : (tc[taddr ^ BYTE_ADDR_XOR] >> 4);
             UINT16 c = tlut[p ^ WORD_ADDR_XOR];
@@ -897,7 +874,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         }
         case PIXEL_SIZE_8BIT:
         {
-            UINT8 *tc = (UINT8*)texture_cache;
+            UINT8 *tc = (UINT8*)rdpTmem;
             int taddr = (tbase + ((t)* twidth) + ((s))) ^ ((t & 1) ? XOR_SWAP_BYTE : 0);
             UINT8 p = tc[taddr ^ BYTE_ADDR_XOR];
             UINT16 c = tlut[p ^ WORD_ADDR_XOR];
@@ -927,7 +904,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         {
         case PIXEL_SIZE_4BIT:
         {
-            UINT8 *tc = (UINT8*)texture_cache;
+            UINT8 *tc = (UINT8*)rdpTmem;
             int taddr = (tbase + ((t)* twidth) + ((s) / 2)) ^ ((t & 1) ? XOR_SWAP_BYTE : 0);
             UINT8 p = ((s) & 1) ? (tc[taddr ^ BYTE_ADDR_XOR] & 0xf) : (tc[taddr ^ BYTE_ADDR_XOR] >> 4);
             UINT8 i = ((p & 0xe) << 4) | ((p & 0xe) << 1) | (p & 0xe >> 2);
@@ -940,7 +917,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         }
         case PIXEL_SIZE_8BIT:
         {
-            UINT8 *tc = (UINT8*)texture_cache;
+            UINT8 *tc = (UINT8*)rdpTmem;
             int taddr = (tbase + ((t)* twidth) + ((s))) ^ ((t & 1) ? XOR_SWAP_BYTE : 0);
             UINT8 p = tc[taddr ^ BYTE_ADDR_XOR];
             UINT8 i = (p >> 4) | (p & 0xf0);
@@ -953,7 +930,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         }
         case PIXEL_SIZE_16BIT:
         {
-            UINT16 *tc = (UINT16*)texture_cache;
+            UINT16 *tc = (UINT16*)rdpTmem;
             int taddr = (tbase + ((t) * (twidth / 2)) + (s)) ^ ((t & 1) ? XOR_SWAP_WORD : 0);
             UINT16 c = tc[taddr ^ WORD_ADDR_XOR];
             UINT8 i = (c >> 8);
@@ -974,7 +951,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         {
         case PIXEL_SIZE_4BIT:
         {
-            UINT8 *tc = (UINT8*)texture_cache;
+            UINT8 *tc = (UINT8*)rdpTmem;
             int taddr = (tbase + ((t)* twidth) + ((s) / 2)) ^ ((t & 1) ? XOR_SWAP_BYTE : 0);
             UINT8 c = ((s) & 1) ? (tc[taddr ^ BYTE_ADDR_XOR] & 0xf) : (tc[taddr ^ BYTE_ADDR_XOR] >> 4);
             c |= (c << 4);
@@ -987,7 +964,7 @@ INLINE void FETCH_TEXEL(COLOR *color, int s, int t, UINT32 twidth, UINT32 tforma
         }
         case PIXEL_SIZE_8BIT:
         {
-            UINT8 *tc = (UINT8*)texture_cache;
+            UINT8 *tc = (UINT8*)rdpTmem;
             int taddr = (tbase + ((t)* twidth) + ((s))) ^ ((t & 1) ? XOR_SWAP_BYTE : 0);
             UINT8 c = tc[taddr ^ BYTE_ADDR_XOR];
 
@@ -1183,24 +1160,24 @@ static void texture_rectangle_16bit(TEX_RECTANGLE *rect)
         y2 = clipy2 - 1;
     }
 
-    tsl = tile[rect->tilenum].sl;
-    tsh = tile[rect->tilenum].sh;
-    ttl = tile[rect->tilenum].tl;
-    tth = tile[rect->tilenum].th;
+    tsl = rdpTiles[rect->tilenum].sl;
+    tsh = rdpTiles[rect->tilenum].sh;
+    ttl = rdpTiles[rect->tilenum].tl;
+    tth = rdpTiles[rect->tilenum].th;
 
-    twidth = tile[rect->tilenum].line;
-    tformat = tile[rect->tilenum].format;
-    tsize = tile[rect->tilenum].size;
-    tbase = tile[rect->tilenum].tmem;
+    twidth = rdpTiles[rect->tilenum].line;
+    tformat = rdpTiles[rect->tilenum].format;
+    tsize = rdpTiles[rect->tilenum].size;
+    tbase = rdpTiles[rect->tilenum].tmem;
 
     // FIXME?: clamping breaks at least Rampage World Tour
-    clamp_t = 0; //tile[rect->tilenum].ct;
-    clamp_s = 0; //tile[rect->tilenum].cs;
+    clamp_t = 0; //rdpTiles[rect->tilenum].ct;
+    clamp_s = 0; //rdpTiles[rect->tilenum].cs;
 
-    mirror_t = tile[rect->tilenum].mt;
-    mirror_s = tile[rect->tilenum].ms;
-    mask_t = tile[rect->tilenum].mask_t;
-    mask_s = tile[rect->tilenum].mask_s;
+    mirror_t = rdpTiles[rect->tilenum].mt;
+    mirror_s = rdpTiles[rect->tilenum].ms;
+    mask_t = rdpTiles[rect->tilenum].mask_t;
+    mask_s = rdpTiles[rect->tilenum].mask_s;
 
     t = (int)(rect->t) << 5;
 
@@ -1311,7 +1288,7 @@ static void texture_rectangle_16bit(TEX_RECTANGLE *rect)
                 t &= (((UINT32)(0xffffffff) >> (32-mask_t)) << 10) | 0x3ff;
                 }
 
-                FETCH_TEXEL(&c, (s-tile[rect->tilenum].sl) >> 10, (t-tile[rect->tilenum].tl) >> 10, twidth, tformat, tsize, tbase);
+                FETCH_TEXEL(&c, (s-rdpTiles[rect->tilenum].sl) >> 10, (t-rdpTiles[rect->tilenum].tl) >> 10, twidth, tformat, tsize, tbase);
                 */
                 //ss = (s >> 10) - (tsl >> 2);
                 //if ((s & 0x3ff) >= 0x200) ss++;
@@ -1566,24 +1543,24 @@ static void texture_rectangle_32bit(TEX_RECTANGLE *rect)
         y2 = clipy2 - 1;
     }
 
-    tsl = tile[rect->tilenum].sl;
-    tsh = tile[rect->tilenum].sh;
-    ttl = tile[rect->tilenum].tl;
-    tth = tile[rect->tilenum].th;
+    tsl = rdpTiles[rect->tilenum].sl;
+    tsh = rdpTiles[rect->tilenum].sh;
+    ttl = rdpTiles[rect->tilenum].tl;
+    tth = rdpTiles[rect->tilenum].th;
 
-    twidth = tile[rect->tilenum].line;
-    tformat = tile[rect->tilenum].format;
-    tsize = tile[rect->tilenum].size;
-    tbase = tile[rect->tilenum].tmem;
+    twidth = rdpTiles[rect->tilenum].line;
+    tformat = rdpTiles[rect->tilenum].format;
+    tsize = rdpTiles[rect->tilenum].size;
+    tbase = rdpTiles[rect->tilenum].tmem;
 
     // FIXME?: clamping breaks at least Rampage World Tour
-    clamp_t = 0; //tile[rect->tilenum].ct;
-    clamp_s = 0; //tile[rect->tilenum].cs;
+    clamp_t = 0; //rdpTiles[rect->tilenum].ct;
+    clamp_s = 0; //rdpTiles[rect->tilenum].cs;
 
-    mirror_t = tile[rect->tilenum].mt;
-    mirror_s = tile[rect->tilenum].ms;
-    mask_t = tile[rect->tilenum].mask_t;
-    mask_s = tile[rect->tilenum].mask_s;
+    mirror_t = rdpTiles[rect->tilenum].mt;
+    mirror_s = rdpTiles[rect->tilenum].ms;
+    mask_t = rdpTiles[rect->tilenum].mask_t;
+    mask_s = rdpTiles[rect->tilenum].mask_s;
 
     t = (int)(rect->t) << 5;
 
@@ -1687,7 +1664,7 @@ static void texture_rectangle_32bit(TEX_RECTANGLE *rect)
                 t &= (((UINT32)(0xffffffff) >> (32-mask_t)) << 10) | 0x3ff;
                 }
 
-                FETCH_TEXEL(&c, (s-tile[rect->tilenum].sl) >> 10, (t-tile[rect->tilenum].tl) >> 10, twidth, tformat, tsize, tbase);
+                FETCH_TEXEL(&c, (s-rdpTiles[rect->tilenum].sl) >> 10, (t-rdpTiles[rect->tilenum].tl) >> 10, twidth, tformat, tsize, tbase);
                 */
                 //ss = (s >> 10) - (tsl >> 2);
                 //if ((s & 0x3ff) >= 0x200) ss++;
@@ -1733,22 +1710,22 @@ static void render_spans_32(int start, int end, int tilenum, int shade, int text
     clipy1 = clip.yh / 4;
     clipy2 = clip.yl / 4;
 
-    tsl = tile[tilenum].sl;
-    tsh = tile[tilenum].sh;
-    ttl = tile[tilenum].tl;
-    tth = tile[tilenum].th;
+    tsl = rdpTiles[tilenum].sl;
+    tsh = rdpTiles[tilenum].sh;
+    ttl = rdpTiles[tilenum].tl;
+    tth = rdpTiles[tilenum].th;
 
-    twidth = tile[tilenum].line;
-    tformat = tile[tilenum].format;
-    tsize = tile[tilenum].size;
-    tbase = tile[tilenum].tmem;
+    twidth = rdpTiles[tilenum].line;
+    tformat = rdpTiles[tilenum].format;
+    tsize = rdpTiles[tilenum].size;
+    tbase = rdpTiles[tilenum].tmem;
 
-    clamp_t = tile[tilenum].ct;
-    clamp_s = tile[tilenum].cs;
-    mirror_t = tile[tilenum].mt;
-    mirror_s = tile[tilenum].ms;
-    mask_t = tile[tilenum].mask_t;
-    mask_s = tile[tilenum].mask_s;
+    clamp_t = rdpTiles[tilenum].ct;
+    clamp_s = rdpTiles[tilenum].cs;
+    mirror_t = rdpTiles[tilenum].mt;
+    mirror_s = rdpTiles[tilenum].ms;
+    mask_t = rdpTiles[tilenum].mask_t;
+    mask_s = rdpTiles[tilenum].mask_s;
 
     if (start < clipy1)
     {
@@ -1982,22 +1959,22 @@ static void render_spans_16(int start, int end, int tilenum, int shade, int text
     clipy1 = clip.yh / 4;
     clipy2 = clip.yl / 4;
 
-    tsl = tile[tilenum].sl;
-    tsh = tile[tilenum].sh;
-    ttl = tile[tilenum].tl;
-    tth = tile[tilenum].th;
+    tsl = rdpTiles[tilenum].sl;
+    tsh = rdpTiles[tilenum].sh;
+    ttl = rdpTiles[tilenum].tl;
+    tth = rdpTiles[tilenum].th;
 
-    twidth = tile[tilenum].line;
-    tformat = tile[tilenum].format;
-    tsize = tile[tilenum].size;
-    tbase = tile[tilenum].tmem;
+    twidth = rdpTiles[tilenum].line;
+    tformat = rdpTiles[tilenum].format;
+    tsize = rdpTiles[tilenum].size;
+    tbase = rdpTiles[tilenum].tmem;
 
-    clamp_t = tile[tilenum].ct;
-    clamp_s = tile[tilenum].cs;
-    mirror_t = tile[tilenum].mt;
-    mirror_s = tile[tilenum].ms;
-    mask_t = tile[tilenum].mask_t;
-    mask_s = tile[tilenum].mask_s;
+    clamp_t = rdpTiles[tilenum].ct;
+    clamp_s = rdpTiles[tilenum].cs;
+    mirror_t = rdpTiles[tilenum].mt;
+    mirror_s = rdpTiles[tilenum].ms;
+    mask_t = rdpTiles[tilenum].mask_t;
+    mask_s = rdpTiles[tilenum].mask_s;
 
     if (start < clipy1)
     {
@@ -3090,16 +3067,16 @@ static void rdp_load_tlut(UINT32 w1, UINT32 w2)
     sl = ((w1 >> 12) & 0xfff) / 4;
     sh = ((w2 >> 12) & 0xfff) / 4;
 
-    switch (ti_format)
+    switch (rdpTiFormat)
     {
     case 0:		// RGBA
     {
-        switch (ti_size)
+        switch (rdpTiSize)
         {
         case PIXEL_SIZE_16BIT:
         {
-            UINT16 *src = (UINT16*)&rdram[ti_address / 4];
-            //              UINT16 *tlut = (UINT16*)&texture_cache[tile[tilenum].tmem/2];
+            UINT16 *src = (UINT16*)&rdram[rdpTiAddress / 4];
+            //              UINT16 *tlut = (UINT16*)&rdpTmem[rdpTiles[tilenum].tmem/2];
 
             for (i = sl; i <= sh; i++)
             {
@@ -3108,12 +3085,12 @@ static void rdp_load_tlut(UINT32 w1, UINT32 w2)
             }
             break;
         }
-        default:	fatalerror("RDP: load_tlut: size = %d\n", ti_size);
+        default:	fatalerror("RDP: load_tlut: size = %d\n", rdpTiSize);
         }
         break;
     }
 
-    default:	fatalerror("RDP: load_tlut: format = %d\n", ti_format);
+    default:	fatalerror("RDP: load_tlut: format = %d\n", rdpTiFormat);
     }
 
 }
@@ -3122,176 +3099,28 @@ static void rdp_set_tile_size(UINT32 w1, UINT32 w2)
 {
     int tilenum = (w2 >> 24) & 0x7;
 
-    tile[tilenum].sl = (w1 >> 12) & 0xfff;
-    tile[tilenum].tl = (w1 >> 0) & 0xfff;
-    tile[tilenum].sh = (w2 >> 12) & 0xfff;
-    tile[tilenum].th = (w2 >> 0) & 0xfff;
-}
-
-static void rdp_load_block(UINT32 w1, UINT32 w2)
-{
-    int i, width;
-    UINT16 sl, sh, tl, dxt;
-    int tilenum = (w2 >> 24) & 0x7;
-    UINT32 *src, *tc;
-    int tb;
-
-    if (ti_format != tile[tilenum].format || ti_size != tile[tilenum].size)
-        fatalerror("RDP: load_block: format conversion required!\n");
-
-    sl = ((w1 >> 12) & 0xfff);
-    tl = ((w1 >> 0) & 0xfff) << 11;
-    sh = ((w2 >> 12) & 0xfff);
-    dxt = ((w2 >> 0) & 0xfff);
-
-    width = (sh - sl) + 1;
-
-    switch (ti_size)
-    {
-    case PIXEL_SIZE_4BIT:	width >>= 1; break;
-    case PIXEL_SIZE_8BIT:	break;
-    case PIXEL_SIZE_16BIT:	width <<= 1; break;
-    case PIXEL_SIZE_32BIT:	width <<= 2; break;
-    }
-
-
-    src = (UINT32*)&rdram[ti_address / 4];
-    tc = (UINT32*)texture_cache;
-    tb = tile[tilenum].tmem;
-
-    if (dxt != 0)
-    {
-        int j = 0;
-        for (i = 0; i < width; i += 2)
-        {
-            int t = j >> 11;
-
-            tc[((tb + i) + 0)] = src[((((tl * ti_width) / 4) + sl + i + 0) ^ ((t & 1) ? 1 : 0))];
-            tc[((tb + i) + 1)] = src[((((tl * ti_width) / 4) + sl + i + 1) ^ ((t & 1) ? 1 : 0))];
-
-            j += dxt;
-        }
-    }
-    else
-    {
-        for (i = 0; i < width / 4; i++)
-        {
-            tc[(tb + i)] = src[((tl * ti_width) / 4) + sl + i];
-        }
-    }
-}
-
-static void rdp_load_tile(UINT32 w1, UINT32 w2)
-{
-    int i, j;
-    UINT16 sl, sh, tl, th;
-    int width, height;
-    int tilenum = (w2 >> 24) & 0x7;
-
-    if (ti_format != tile[tilenum].format || ti_size != tile[tilenum].size)
-        fatalerror("RDP: load_block: format conversion required!\n");
-
-    sl = ((w1 >> 12) & 0xfff) / 4;
-    tl = ((w1 >> 0) & 0xfff) / 4;
-    sh = ((w2 >> 12) & 0xfff) / 4;
-    th = ((w2 >> 0) & 0xfff) / 4;
-
-    width = (sh - sl) + 1;
-    height = (th - tl) + 1;
-
-    switch (ti_size)
-    {
-    case PIXEL_SIZE_8BIT:
-    {
-        UINT8 *src = (UINT8*)&rdram[ti_address / 4];
-        UINT8 *tc = (UINT8*)texture_cache;
-        int tb = tile[tilenum].tmem;
-
-        if (tb + (width * height) > 4096)
-        {
-            fatalerror("rdp_load_tile 8-bit: tmem %04X, width %d, height %d = %d\n", tile[tilenum].tmem, width, height, width*height);
-        }
-
-        for (j = 0; j < height; j++)
-        {
-            int tline = tb + (tile[tilenum].line * j);
-            int s = ((j + tl) * ti_width) + sl;
-
-            for (i = 0; i < width; i++)
-            {
-                tc[((tline + i) ^ BYTE_ADDR_XOR) ^ ((j & 1) ? 4 : 0)] = src[(s++) ^ BYTE_ADDR_XOR];
-            }
-        }
-        break;
-    }
-    case PIXEL_SIZE_16BIT:
-    {
-        UINT16 *src = (UINT16*)&rdram[ti_address / 4];
-        UINT16 *tc = (UINT16*)texture_cache;
-        int tb = (tile[tilenum].tmem / 2);
-
-        if (tb + (width * height) > 2048)
-        {
-            //fatalerror("rdp_load_tile 16-bit: tmem %04X, width %d, height %d = %d\n", tile[tilenum].tmem, width, height, width*height);
-        }
-
-        for (j = 0; j < height; j++)
-        {
-            int tline = tb + ((tile[tilenum].line / 2) * j);
-            int s = ((j + tl) * ti_width) + sl;
-
-            for (i = 0; i < width; i++)
-            {
-                tc[((tline + i) ^ WORD_ADDR_XOR) ^ ((j & 1) ? 2 : 0)] = src[(s++) ^ WORD_ADDR_XOR];
-            }
-        }
-        break;
-    }
-    case PIXEL_SIZE_32BIT:
-    {
-        UINT32 *src = (UINT32*)&rdram[ti_address / 4];
-        UINT32 *tc = (UINT32*)texture_cache;
-        int tb = (tile[tilenum].tmem / 4);
-
-        if (tb + (width * height) > 1024)
-        {
-            fatalerror("rdp_load_tile 32-bit: tmem %04X, width %d, height %d = %d\n", tile[tilenum].tmem, width, height, width*height);
-        }
-
-        for (j = 0; j < height; j++)
-        {
-            int tline = tb + ((tile[tilenum].line / 4) * j);
-            int s = ((j + tl) * ti_width) + sl;
-
-            for (i = 0; i < width; i++)
-            {
-                tc[(tline + i) ^ ((j & 1) ? 1 : 0)] = src[(s++)];
-            }
-        }
-        break;
-    }
-
-    default:	fatalerror("RDP: load_tile: size = %d\n", ti_size);
-    }
-
+    rdpTiles[tilenum].sl = (w1 >> 12) & 0xfff;
+    rdpTiles[tilenum].tl = (w1 >> 0) & 0xfff;
+    rdpTiles[tilenum].sh = (w2 >> 12) & 0xfff;
+    rdpTiles[tilenum].th = (w2 >> 0) & 0xfff;
 }
 
 static void rdp_set_tile(UINT32 w1, UINT32 w2)
 {
     int tilenum = (w2 >> 24) & 0x7;
 
-    tile[tilenum].format = (w1 >> 21) & 0x7;
-    tile[tilenum].size = (w1 >> 19) & 0x3;
-    tile[tilenum].line = ((w1 >> 9) & 0x1ff) * 8;
-    tile[tilenum].tmem = ((w1 >> 0) & 0x1ff) * 8;
-    tile[tilenum].ct = (w2 >> 19) & 0x1;
-    tile[tilenum].mt = (w2 >> 18) & 0x1;
-    tile[tilenum].mask_t = (w2 >> 14) & 0xf;
-    tile[tilenum].shift_t = (w2 >> 10) & 0xf;
-    tile[tilenum].cs = (w2 >> 9) & 0x1;
-    tile[tilenum].ms = (w2 >> 8) & 0x1;
-    tile[tilenum].mask_s = (w2 >> 4) & 0xf;
-    tile[tilenum].shift_s = (w2 >> 0) & 0xf;
+    rdpTiles[tilenum].format = (w1 >> 21) & 0x7;
+    rdpTiles[tilenum].size = (w1 >> 19) & 0x3;
+    rdpTiles[tilenum].line = ((w1 >> 9) & 0x1ff) * 8;
+    rdpTiles[tilenum].tmem = ((w1 >> 0) & 0x1ff) * 8;
+    rdpTiles[tilenum].ct = (w2 >> 19) & 0x1;
+    rdpTiles[tilenum].mt = (w2 >> 18) & 0x1;
+    rdpTiles[tilenum].mask_t = (w2 >> 14) & 0xf;
+    rdpTiles[tilenum].shift_t = (w2 >> 10) & 0xf;
+    rdpTiles[tilenum].cs = (w2 >> 9) & 0x1;
+    rdpTiles[tilenum].ms = (w2 >> 8) & 0x1;
+    rdpTiles[tilenum].mask_s = (w2 >> 4) & 0xf;
+    rdpTiles[tilenum].shift_s = (w2 >> 0) & 0xf;
 
     // TODO: clamp & mirror parameters
 }
@@ -3390,10 +3219,10 @@ static void rdp_set_combine(UINT32 w1, UINT32 w2)
 
 static void rdp_set_texture_image(UINT32 w1, UINT32 w2)
 {
-    ti_format = (w1 >> 21) & 0x7;
-    ti_size = (w1 >> 19) & 0x3;
-    ti_width = (w1 & 0x3ff) + 1;
-    ti_address = w2 & 0x01ffffff;
+    rdpTiFormat = (w1 >> 21) & 0x7;
+    rdpTiSize = (w1 >> 19) & 0x3;
+    rdpTiWidth = (w1 & 0x3ff) + 1;
+    rdpTiAddress = w2 & 0x01ffffff;
 }
 
 static void rdp_set_mask_image(UINT32 w1, UINT32 w2)

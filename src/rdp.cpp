@@ -377,7 +377,7 @@ static void rdp_set_other_modes(uint32_t w1, uint32_t w2)
     rdpState.otherModes.w2 = w2;
 }
 
-static void rdp_load_tlut(uint32_t w1, uint32_t w2)
+void rdp_load_tlut(uint32_t w1, uint32_t w2)
 {
     int tilenum = (w2 >> 24) & 0x7;
 
@@ -440,7 +440,7 @@ static void rdp_set_tile_size(uint32_t w1, uint32_t w2)
 #undef tile
 }
 
-static void rdp_load_block(uint32_t w1, uint32_t w2)
+void rdp_load_block(uint32_t w1, uint32_t w2)
 {
     int i, width;
     uint16_t sl, sh, tl, dxt;
@@ -510,7 +510,7 @@ static void rdp_load_block(uint32_t w1, uint32_t w2)
     }
 }
 
-static void rdp_load_tile(uint32_t w1, uint32_t w2)
+void rdp_load_tile(uint32_t w1, uint32_t w2)
 {
     int i, j;
     uint16_t sl, sh, tl, th;

@@ -259,6 +259,9 @@ void rdp_process_list(void);
 void rgl_process_list(void);
 int rgl_store_list(void);
 
+void rdp_load_tile(uint32_t w1, uint32_t w2);
+void rdp_load_block(uint32_t w1, uint32_t w2);
+
 #ifdef MUPEN64PLUS
 void rdp_log(m64p_msg_level level, const char *msg, ...);
 #endif
